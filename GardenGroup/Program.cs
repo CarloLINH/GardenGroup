@@ -21,12 +21,12 @@ namespace GardenGroup
                 Environment.Exit(0);
             }
             var client = new MongoClient(connectionString);
-            var collection = client.GetDatabase("sample_mflix").GetCollection<BsonDocument>("movies");
-            var filter = Builders<BsonDocument>.Filter.Eq("title", "Back to the Future");
+            var collection = client.GetDatabase("helpdesk").GetCollection<BsonDocument>("employees");
+            var filter = Builders<BsonDocument>.Filter.Eq("firstName", "Richard");
             var document = collection.Find(filter).FirstOrDefault();
             if (document == null)
             {
-                Console.WriteLine("No movie found matching the query.");
+                Console.WriteLine("No thing found matching the query.");
             }
             else
             {
