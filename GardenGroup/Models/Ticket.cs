@@ -3,7 +3,8 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace GardenGroup.Models
 {
-    
+
+    using GardenGroup.Enums;
     public class Ticket
     {
         [BsonId] public ObjectId Id { get; set; }

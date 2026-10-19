@@ -1,7 +1,8 @@
-using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
-    
+using MongoDB.Driver;
+using GardenGroup.Repositories;
+
 namespace GardenGroup
 {
     public class Program
@@ -13,8 +14,11 @@ namespace GardenGroup
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             
+
             var connectionString = builder.Configuration.GetConnectionString("MongoDb");
-            
+            builder.Services.AddSingleton<IMongoDatabase>(_ => MongoConnection.Create(connectionString!, "helpdesk"));
+            builder.Services.AddScoped<ITicketQueries, TicketQueries>();
+
             if (connectionString == null)
             {
                 Console.WriteLine("You must set your 'MONGODB_URI' environment variable. To learn how to set it, see https://www.mongodb.com/docs/drivers/csharp/current/get-started/create-connection-string");

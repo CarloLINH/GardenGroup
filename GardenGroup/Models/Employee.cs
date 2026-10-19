@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using static GardenGroup.Enums.Enums;
+using GardenGroup.Enums;
 
 namespace GardenGroup.Models
 {
