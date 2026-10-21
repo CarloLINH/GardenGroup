@@ -19,5 +19,8 @@ namespace GardenGroup.Repositories
         List<Ticket> GetTicketsByAssignedEmployee(int employeeId);
         List<Ticket> GetTicketsSortedByCreationDate(bool newestFirst);
 
+        List<Ticket> GetTickets(Statuses? status, int? assignedToId, bool newestFirst = true);
+        int GetLastTicketId();
+
     }
 }
