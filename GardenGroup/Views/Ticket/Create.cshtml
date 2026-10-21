@@ -1,0 +1,37 @@
+﻿@model GardenGroup.Models.Ticket
+
+<h2>Create New Ticket</h2>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" method="post">
+
+            <div class="form-group mb-3">
+                <label asp-for="Title" class="control-label fw-bold"></label>
+                <input asp-for="Title" class="form-control" placeholder="Enter ticket title..." />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Description" class="control-label fw-bold"></label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ReportById" class="control-label fw-bold">Reported By (User ID)</label>
+                <input asp-for="ReportById" type="number" class="form-control" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Priority" class="control-label fw-bold"></label>
+                <select asp-for="Priority" asp-items="Html.GetEnumSelectList<GardenGroup.Enums.Priorities>()" class="form-select"></select>
+            </div>
+
+            <div class="form-group mt-4">
+                <input type="submit" value="Create Ticket" class="btn btn-success" />
+                <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>

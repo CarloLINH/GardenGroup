@@ -1,32 +1,50 @@
-﻿using MongoDB.Bson;
+using System;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using GardenGroup.Enums;
 
 namespace GardenGroup.Models
 {
-
-    using GardenGroup.Enums;
+    [BsonIgnoreExtraElements] 
     public class Ticket
     {
-        [BsonId] public ObjectId Id { get; set; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? Id { get; set; } 
 
-        public string Title { get; set; } = "";
-        public string Description { get; set; } = "";
+        [BsonElement("ticketId")]
+        public int TicketId { get; set; }
 
-        public DateTime DateOfEvent { get; set; }
+        [BsonElement("reportedBy")]
+        public int ReportById { get; set; }
 
-        public TicketPriority Priority { get; set; } = TicketPriority.Medium;
+        [BsonElement("assignedTo")]
+        public int? AssignedToId { get; set; }
 
-        [BsonRepresentation(BsonType.String)]
-        public TicketStatus Status { get; set; } = TicketStatus.Open;
-        //verwijst naar employeeid
-        public ObjectId ReportedBy { get; set; }
-        //verwijst naar employee id
-        public ObjectId? AssignedTo { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
-        public DateTime? ResolvedAt { get; set; }
-        public DateTime? ClosedAt { get; set; }
+        [BsonElement("title")]
+        public required string Title { get; set; }
+
+        [BsonElement("description")]
+        public string? Description { get; set; }
+
+        [BsonElement("createdAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        [BsonElement("updatedAt")]
+        public DateTime? UpdatedAt { get; set; }
+
+        [BsonElement("status")]
+        [BsonRepresentation(BsonType.String)] 
+        public Statuses Status { get; set; } = Statuses.Open;
+
+        [BsonElement("priority")]
+        [BsonRepresentation(BsonType.String)] 
+        public Priorities Priority { get; set; } = Priorities.Medium;
+
+        [BsonElement("resolvedAt")]
+        public DateTime? ResolvedAt { get; set; } 
+
+        [BsonElement("closedAt")]
+        public DateTime? ClosedAt { get; set; } 
     }
-
 }
-
