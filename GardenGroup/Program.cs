@@ -1,6 +1,8 @@
-using MongoDB.Driver;
+using GardenGroup.Repositories;
+using GardenGroup.Services;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
+using MongoDB.Driver;
     
 namespace GardenGroup
 {
@@ -20,18 +22,16 @@ namespace GardenGroup
                 Console.WriteLine("You must set your 'MONGODB_URI' environment variable. To learn how to set it, see https://www.mongodb.com/docs/drivers/csharp/current/get-started/create-connection-string");
                 Environment.Exit(0);
             }
+
             var client = new MongoClient(connectionString);
-            var collection = client.GetDatabase("helpdesk").GetCollection<BsonDocument>("employees");
-            var filter = Builders<BsonDocument>.Filter.Eq("firstName", "Richard");
-            var document = collection.Find(filter).FirstOrDefault();
-            if (document == null)
-            {
-                Console.WriteLine("No thing found matching the query.");
-            }
-            else
-            {
-                Console.WriteLine(document.ToJson(new JsonWriterSettings { Indent = true }));
-            }
+
+            builder.Services.AddSingleton<IMongoClient>(client);
+
+            builder.Services.AddSingleton(client.GetDatabase("helpdesk"));
+
+
+            builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+            builder.Services.AddScoped<ITicketService, TicketService>();
 
             var app = builder.Build();
 
