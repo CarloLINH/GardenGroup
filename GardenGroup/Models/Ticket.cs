@@ -41,9 +41,9 @@ namespace GardenGroup.Models
         public Priorities Priority { get; set; } = Priorities.Medium;
 
         [BsonElement("resolvedAt")]
-        public DateTime? ResolvedAt { get; set; } // Changed to nullable
+        public DateTime? ResolvedAt { get; set; } 
 
         [BsonElement("closedAt")]
-        public DateTime? ClosedAt { get; set; } // Changed to nullable
+        public DateTime? ClosedAt { get; set; } 
     }
 }

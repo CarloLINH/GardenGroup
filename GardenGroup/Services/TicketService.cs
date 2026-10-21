@@ -17,7 +17,7 @@ namespace GardenGroup.Services
             return _ticketRepository.GetAllTickets();
         }
 
-        public Ticket GetTicketById(int id)
+        public Ticket GetTicketById(string id)
         {
             return _ticketRepository.GetTicketById(id);
         }
@@ -40,7 +40,7 @@ namespace GardenGroup.Services
             _ticketRepository.UpdateTicket(ticket);
         }
 
-        public void DeleteTicket(int id)
+        public void DeleteTicket(string id)
         {
             _ticketRepository.DeleteTicket(id);
         }

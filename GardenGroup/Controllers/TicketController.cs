@@ -1,78 +1,80 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using GardenGroup.Models;
+using GardenGroup.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GardenGroup.Controllers
 {
     public class TicketController : Controller
     {
-        // GET: TicketController
-        public ActionResult Index()
+        private readonly ITicketService _ticketService;
+
+        public TicketController(ITicketService ticketService)
         {
-            return View();
+            _ticketService = ticketService;
         }
 
-    
-        // GET: TicketController/Create
+        public ActionResult Index()
+        {
+            var tickets = _ticketService.GetAllTickets();
+            return View(tickets);
+        }
+
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: TicketController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(Ticket ticket)
         {
-            try
+            if (ModelState.IsValid)
             {
+                _ticketService.CreateTicket(ticket);
                 return RedirectToAction(nameof(Index));
             }
-            catch
-            {
-                return View();
-            }
+            return View(ticket);
         }
 
-        // GET: TicketController/Edit/5
-        public ActionResult Edit(int id)
+        public ActionResult Edit(string id)
         {
-            return View();
+            var ticket = _ticketService.GetTicketById(id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+            return View(ticket);
         }
 
-        // POST: TicketController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(string id, Ticket ticket)
         {
-            try
+            if (ModelState.IsValid)
             {
+                ticket.Id = id;
+                _ticketService.UpdateTicket(ticket);
                 return RedirectToAction(nameof(Index));
             }
-            catch
-            {
-                return View();
-            }
+            return View(ticket);
         }
 
-        // GET: TicketController/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete(string id)
         {
-            return View();
+            var ticket = _ticketService.GetTicketById(id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+            return View(ticket);
         }
 
-        // POST: TicketController/Delete/5
-        [HttpPost]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult DeleteConfirmed(string id)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            _ticketService.DeleteTicket(id);
+            return RedirectToAction(nameof(Index));
         }
     }
 }

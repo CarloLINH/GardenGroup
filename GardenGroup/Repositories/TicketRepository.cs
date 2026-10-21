@@ -18,9 +18,9 @@ namespace GardenGroup.Repositories
             _tickets.InsertOne(ticket);
         }
 
-        public void DeleteTicket(int id)
+        public void DeleteTicket(string id)
         {
-            _tickets.DeleteOne(t => t.TicketId == id);
+            _tickets.DeleteOne(t => t.Id == id);
         }
 
         public List<Ticket> GetAllTickets()
@@ -28,14 +28,14 @@ namespace GardenGroup.Repositories
             return _tickets.Find(_ => true).ToList();
         }
 
-        public Ticket GetTicketById(int id)
+        public Ticket GetTicketById(string id)
         {
-            return _tickets.Find(t => t.TicketId == id).FirstOrDefault();
+            return _tickets.Find(t => t.Id == id).FirstOrDefault();
         }
 
         public void UpdateTicket(Ticket ticket)
         {
-            _tickets.ReplaceOne(t => t.TicketId == ticket.TicketId, ticket);
+            _tickets.ReplaceOne(t => t.Id == ticket.Id, ticket);
         }
     }
 }

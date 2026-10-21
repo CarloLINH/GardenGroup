@@ -1,4 +1,5 @@
 using GardenGroup.Repositories;
+using GardenGroup.Services;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
@@ -30,6 +31,7 @@ namespace GardenGroup
 
 
             builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+            builder.Services.AddScoped<ITicketService, TicketService>();
 
             var app = builder.Build();
 
