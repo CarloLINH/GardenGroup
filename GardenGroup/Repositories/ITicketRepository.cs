@@ -1,4 +1,5 @@
-﻿using GardenGroup.Models;
+﻿using GardenGroup.Enums;
+using GardenGroup.Models;
 
 namespace GardenGroup.Repositories
 {
@@ -13,5 +14,10 @@ namespace GardenGroup.Repositories
         void UpdateTicket(Ticket ticket);
 
         void DeleteTicket(string id);
+
+        List<Ticket> GetTicketsByStatus(Statuses status);
+        List<Ticket> GetTicketsByAssignedEmployee(int employeeId);
+        List<Ticket> GetTicketsSortedByCreationDate(bool newestFirst);
+
     }
 }
