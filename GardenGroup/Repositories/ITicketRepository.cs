@@ -1,22 +1,17 @@
-﻿using System.Net.Sockets;
-using MongoDB.Bson;
-using GardenGroup.Models;
-using GardenGroup.Enums;
+﻿using GardenGroup.Models;
+
 namespace GardenGroup.Repositories
 {
-    
-        public interface ITicketRepository
-        {
-          Task<List<Ticket>> GetAllAsync();
-          
-          Task<Ticket> CreateAsync(Ticket ticket);
+    public interface ITicketRepository
+    {
+        List<Ticket> GetAllTickets();
 
-          Task<Ticket?> GetByIdAsync(string id);
-          // false als er geen ticket bestaat
-          Task<bool> UpdateAsync(Ticket ticket);     
-          Task<bool> UpdateStatusAsync(ObjectId id, TicketStatus newStatus);
-          //status naar closed, soft delete
-          Task<bool> CloseAsync(ObjectId id);
-        }
+        Ticket? GetTicketById(string id);
+
+        void CreateTicket(Ticket ticket);
+
+        void UpdateTicket(Ticket ticket);
+
+        void DeleteTicket(string id);
     }
-
+}
