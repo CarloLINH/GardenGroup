@@ -1,4 +1,5 @@
-﻿using GardenGroup.Models;
+﻿using GardenGroup.Enums;
+using GardenGroup.Models;
 using GardenGroup.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +14,12 @@ namespace GardenGroup.Controllers
             _ticketService = ticketService;
         }
 
-        public ActionResult Index()
+        public ActionResult Index(Statuses? status, int? assignedTo, string sort = "newest")
         {
-            var tickets = _ticketService.GetAllTickets();
+            var tickets = _ticketService.GetTickets(status, assignedTo, sort != "oldest");
+            ViewBag.Status = status;
+            ViewBag.AssignedTo = assignedTo;
+            ViewBag.Sort = sort;
             return View(tickets);
         }
 

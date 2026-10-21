@@ -1,5 +1,6 @@
 ﻿@model IEnumerable<GardenGroup.Models.Ticket>
 @using GardenGroup.Extensions
+@using GardenGroup.Enums
 
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -11,6 +12,31 @@
             + Create New Ticket
         </a>
     </div>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All statuses</option>
+                @foreach (var s in Enum.GetValues<Statuses>())
+                {
+                    <option value="@s" selected="@((Statuses?)ViewBag.Status == s)">@s</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="number" name="assignedTo" class="form-control" placeholder="Assigned to (employee id)" value="@ViewBag.AssignedTo" />
+        </div>
+        <div class="col-md-3">
+            <select name="sort" class="form-select">
+                <option value="newest" selected="@((string)ViewBag.Sort != "oldest")">Newest first</option>
+                <option value="oldest" selected="@((string)ViewBag.Sort == "oldest")">Oldest first</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Apply</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
 
     <div class="card shadow-sm border-0 rounded-3">
         <div class="card-body p-0">
