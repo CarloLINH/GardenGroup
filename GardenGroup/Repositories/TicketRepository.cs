@@ -28,7 +28,7 @@ namespace GardenGroup.Repositories
             return _tickets.Find(_ => true).ToList();
         }
 
-        public Ticket GetTicketById(string id)
+        public Ticket? GetTicketById(string id)
         {
             return _tickets.Find(t => t.Id == id).FirstOrDefault();
         }
