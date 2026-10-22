@@ -4,7 +4,15 @@
 <div class="row g-3">
 	<div class="col-md-4">
 		<label asp-for="EmployeeId" class="form-label"></label>
-		<input asp-for="EmployeeId" class="form-control" />
+		@if (ViewContext.RouteData.Values["action"]?.ToString() == "Create")
+		{
+			<input asp-for="EmployeeId" class="form-control" readonly />
+			<div class="form-text">Automatically assigned.</div>
+		}
+		else
+		{
+			<input asp-for="EmployeeId" class="form-control" readonly />
+		}
 		<span asp-validation-for="EmployeeId" class="text-danger"></span>
 	</div>
 	<div class="col-md-4">
@@ -24,7 +32,13 @@
 	</div>
 	<div class="col-md-6">
 		<label asp-for="Role" class="form-label"></label>
-		<input asp-for="Role" class="form-control" placeholder="manager" />
+		<select asp-for="Role" class="form-select">
+			<option value="">Select a role</option>
+			<option value="manager">manager</option>
+			<option value="admin">admin</option>
+			<option value="agent">agent</option>
+			<option value="employee">employee</option>
+		</select>
 		<span asp-validation-for="Role" class="text-danger"></span>
 	</div>
 	<div class="col-md-6">

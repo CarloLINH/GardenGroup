@@ -1,39 +1,36 @@
 using GardenGroup.Models;
-using Microsoft.AspNetCore.Identity;
+using GardenGroup.Services;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
 
 namespace GardenGroup.Controllers;
 
 public sealed class EmployeesController : Controller
 {
-    private readonly IMongoCollection<Employee> _employees;
-    private readonly IPasswordHasher<Employee> _passwordHasher = new PasswordHasher<Employee>();
+    private readonly IEmployeeService _employeeService;
 
-    public EmployeesController(IMongoCollection<Employee> employees)
+    public EmployeesController(IEmployeeService employeeService)
     {
-        _employees = employees;
+        _employeeService = employeeService;
     }
 
     public async Task<IActionResult> Index()
     {
-        var employees = await _employees.Find(FilterDefinition<Employee>.Empty)
-            .SortBy(employee => employee.EmployeeId)
-            .ToListAsync();
-
-        return View(employees);
+        return View(await _employeeService.GetAllAsync());
     }
 
     public async Task<IActionResult> Details(string? id)
     {
-        var employee = await FindEmployeeAsync(id);
+        var employee = await _employeeService.GetByIdAsync(id);
         return employee is null ? NotFound() : View(employee);
     }
 
     [HttpGet]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        return View(new EmployeeFormViewModel());
+        return View(new EmployeeFormViewModel
+        {
+            EmployeeId = await _employeeService.GetNextEmployeeIdAsync()
+        });
     }
 
     [HttpPost]
@@ -45,17 +42,17 @@ public sealed class EmployeesController : Controller
         model.Email = model.Email.Trim();
         model.Role = model.Role.Trim();
 
+        if (!_employeeService.IsValidRole(model.Role))
+        {
+            ModelState.AddModelError(nameof(model.Role), "Please select a valid role.");
+        }
+
         if (string.IsNullOrWhiteSpace(model.Password))
         {
             ModelState.AddModelError(nameof(model.Password), "A password is required for a new employee.");
         }
 
-        if (await EmployeeIdExistsAsync(model.EmployeeId) && ModelState.IsValid)
-        {
-            ModelState.AddModelError(nameof(model.EmployeeId), "This employee ID is already in use.");
-        }
-
-        if (await EmailExistsAsync(model.Email) && ModelState.IsValid)
+        if (await _employeeService.EmailExistsAsync(model.Email) && ModelState.IsValid)
         {
             ModelState.AddModelError(nameof(model.Email), "This email address is already in use.");
         }
@@ -67,23 +64,20 @@ public sealed class EmployeesController : Controller
 
         var employee = new Employee
         {
-            EmployeeId = model.EmployeeId,
             FirstName = model.FirstName,
             LastName = model.LastName,
             Email = model.Email,
             Role = model.Role,
             IsActive = true
         };
-        employee.Password = _passwordHasher.HashPassword(employee, model.Password!);
-
-        await _employees.InsertOneAsync(employee);
+        await _employeeService.CreateAsync(employee, model.Password!);
         return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(string? id)
     {
-        var employee = await FindEmployeeAsync(id);
+        var employee = await _employeeService.GetByIdAsync(id);
         if (employee is null)
         {
             return NotFound();
@@ -104,23 +98,24 @@ public sealed class EmployeesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string? id, EmployeeFormViewModel model)
     {
-        var employee = await FindEmployeeAsync(id);
+        var employee = await _employeeService.GetByIdAsync(id);
         if (employee is null)
         {
             return NotFound();
         }
 
+        model.EmployeeId = employee.EmployeeId;
         model.FirstName = model.FirstName.Trim();
         model.LastName = model.LastName.Trim();
         model.Email = model.Email.Trim();
         model.Role = model.Role.Trim();
 
-        if (await EmployeeIdExistsAsync(model.EmployeeId, id) && ModelState.IsValid)
+        if (!_employeeService.IsValidRole(model.Role))
         {
-            ModelState.AddModelError(nameof(model.EmployeeId), "This employee ID is already in use.");
+            ModelState.AddModelError(nameof(model.Role), "Please select a valid role.");
         }
 
-        if (await EmailExistsAsync(model.Email, id) && ModelState.IsValid)
+        if (await _employeeService.EmailExistsAsync(model.Email, id) && ModelState.IsValid)
         {
             ModelState.AddModelError(nameof(model.Email), "This email address is already in use.");
         }
@@ -137,21 +132,14 @@ public sealed class EmployeesController : Controller
         employee.Role = model.Role;
         employee.IsActive = model.IsActive;
 
-        if (!string.IsNullOrWhiteSpace(model.Password))
-        {
-            employee.Password = _passwordHasher.HashPassword(employee, model.Password);
-            employee.PasswordResetTime = null;
-            employee.PasswordResetLink = null;
-        }
-
-        await _employees.ReplaceOneAsync(employeeItem => employeeItem.Id == id, employee);
+        await _employeeService.UpdateAsync(employee, model.Password);
         return RedirectToAction(nameof(Details), new { id });
     }
 
     [HttpGet]
     public async Task<IActionResult> Deactivate(string? id)
     {
-        var employee = await FindEmployeeAsync(id);
+        var employee = await _employeeService.GetByIdAsync(id);
         return employee is null ? NotFound() : View(employee);
     }
 
@@ -159,47 +147,15 @@ public sealed class EmployeesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeactivateConfirmed(string? id)
     {
-        var employee = await FindEmployeeAsync(id);
+        var employee = await _employeeService.GetByIdAsync(id);
         if (employee is null)
         {
             return NotFound();
         }
 
-        var update = Builders<Employee>.Update.Set(employeeItem => employeeItem.IsActive, false);
-        await _employees.UpdateOneAsync(employeeItem => employeeItem.Id == id, update);
+        await _employeeService.DeactivateAsync(id!);
 
         return RedirectToAction(nameof(Index));
     }
 
-    private Task<Employee?> FindEmployeeAsync(string? id)
-    {
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            return Task.FromResult<Employee?>(null);
-        }
-
-        return _employees.Find(employee => employee.Id == id).FirstOrDefaultAsync();
-    }
-
-    private Task<bool> EmployeeIdExistsAsync(int employeeId, string? excludedId = null)
-    {
-        var filter = Builders<Employee>.Filter.Eq(employee => employee.EmployeeId, employeeId);
-        return ExistsExcludingAsync(filter, excludedId);
-    }
-
-    private Task<bool> EmailExistsAsync(string email, string? excludedId = null)
-    {
-        var filter = Builders<Employee>.Filter.Eq(employee => employee.Email, email);
-        return ExistsExcludingAsync(filter, excludedId);
-    }
-
-    private async Task<bool> ExistsExcludingAsync(FilterDefinition<Employee> filter, string? excludedId)
-    {
-        if (!string.IsNullOrWhiteSpace(excludedId))
-        {
-            filter &= Builders<Employee>.Filter.Ne(employee => employee.Id, excludedId);
-        }
-
-        return await _employees.Find(filter).Limit(1).AnyAsync();
-    }
 }

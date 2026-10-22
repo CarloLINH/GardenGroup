@@ -1,9 +1,11 @@
 using GardenGroup.Models;
 using GardenGroup.Repositories;
 using GardenGroup.Services;
+using GardenGroup.Models;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
+using Microsoft.AspNetCore.Identity;
     
 namespace GardenGroup
 {
@@ -38,6 +40,9 @@ namespace GardenGroup
 
             builder.Services.AddScoped<ITicketRepository, TicketRepository>();
             builder.Services.AddScoped<ITicketService, TicketService>();
+            builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+            builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+            builder.Services.AddScoped<IPasswordHasher<Employee>, PasswordHasher<Employee>>();
 
             var app = builder.Build();
 
