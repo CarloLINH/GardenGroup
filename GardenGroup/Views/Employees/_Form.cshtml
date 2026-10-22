@@ -1,0 +1,40 @@
+@model EmployeeFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="row g-3">
+	<div class="col-md-4">
+		<label asp-for="EmployeeId" class="form-label"></label>
+		<input asp-for="EmployeeId" class="form-control" />
+		<span asp-validation-for="EmployeeId" class="text-danger"></span>
+	</div>
+	<div class="col-md-4">
+		<label asp-for="FirstName" class="form-label"></label>
+		<input asp-for="FirstName" class="form-control" />
+		<span asp-validation-for="FirstName" class="text-danger"></span>
+	</div>
+	<div class="col-md-4">
+		<label asp-for="LastName" class="form-label"></label>
+		<input asp-for="LastName" class="form-control" />
+		<span asp-validation-for="LastName" class="text-danger"></span>
+	</div>
+	<div class="col-md-6">
+		<label asp-for="Email" class="form-label"></label>
+		<input asp-for="Email" class="form-control" />
+		<span asp-validation-for="Email" class="text-danger"></span>
+	</div>
+	<div class="col-md-6">
+		<label asp-for="Role" class="form-label"></label>
+		<input asp-for="Role" class="form-control" placeholder="manager" />
+		<span asp-validation-for="Role" class="text-danger"></span>
+	</div>
+	<div class="col-md-6">
+		<label asp-for="Password" class="form-label"></label>
+		<input asp-for="Password" class="form-control" autocomplete="new-password" />
+		<span asp-validation-for="Password" class="text-danger"></span>
+		<div class="form-text">Leave empty when editing to keep the current password.</div>
+	</div>
+	<div class="col-12 form-check ms-2">
+		<input asp-for="IsActive" class="form-check-input" />
+		<label asp-for="IsActive" class="form-check-label">Active employee</label>
+	</div>
+</div>
