@@ -18,6 +18,8 @@ namespace GardenGroup
 
             var connectionString = builder.Configuration.GetConnectionString("MongoDb");
             builder.Services.AddSingleton<IMongoDatabase>(_ => MongoConnection.Create(connectionString!, "helpdesk"));
+            builder.Services.AddSingleton<IMongoCollection<Employee>>(serviceProvider =>
+            serviceProvider.GetRequiredService<IMongoDatabase>().GetCollection<Employee>(CollectionNames.Employees));
             builder.Services.AddScoped<ITicketQueries, TicketQueries>();
 
             if (connectionString == null)
