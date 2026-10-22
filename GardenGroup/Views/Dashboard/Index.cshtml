@@ -1,0 +1,19 @@
+﻿@model GardenGroup.ViewModels.DashboardViewModel
+
+<h2>Tickets per status</h2>
+<table class="table">
+    <tr><th>Status</th><th>Count</th><th>%</th></tr>
+    @foreach (var s in Model.Statuses)
+    {
+        <tr><td>@s.Status</td><td>@s.Count</td><td>@s.Percentage.ToString("0.0") %</td></tr>
+    }
+</table>
+
+<h2>Workload</h2>
+<table class="table">
+    <tr><th>Employee</th><th>Tickets</th></tr>
+    @foreach (var w in Model.Workloads)
+    {
+        <tr><td>@w.Name</td><td>@w.TicketCount</td></tr>
+    }
+</table>

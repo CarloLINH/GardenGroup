@@ -1,6 +1,9 @@
-using GardenGroup.Models;
+using GardenGroup.Repositories;
+using GardenGroup.Services;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
 using MongoDB.Driver;
-
+    
 namespace GardenGroup
 {
     public class Program
@@ -12,12 +15,26 @@ namespace GardenGroup
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             
-            var connectionString = builder.Configuration.GetConnectionString("MongoDb")
-                ?? throw new InvalidOperationException("The MongoDb connection string is not configured.");
-            var databaseName = builder.Configuration["MongoDb:Database"] ?? "helpdesk";
+
+            var connectionString = builder.Configuration.GetConnectionString("MongoDb");
+            builder.Services.AddSingleton<IMongoDatabase>(_ => MongoConnection.Create(connectionString!, "helpdesk"));
+            builder.Services.AddScoped<ITicketQueries, TicketQueries>();
+
+            if (connectionString == null)
+            {
+                Console.WriteLine("You must set your 'MONGODB_URI' environment variable. To learn how to set it, see https://www.mongodb.com/docs/drivers/csharp/current/get-started/create-connection-string");
+                Environment.Exit(0);
+            }
+
             var client = new MongoClient(connectionString);
-            var database = client.GetDatabase(databaseName);
-            builder.Services.AddSingleton(database.GetCollection<Employee>("employees"));
+
+            builder.Services.AddSingleton<IMongoClient>(client);
+
+            builder.Services.AddSingleton(client.GetDatabase("helpdesk"));
+
+
+            builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+            builder.Services.AddScoped<ITicketService, TicketService>();
 
             var app = builder.Build();
 

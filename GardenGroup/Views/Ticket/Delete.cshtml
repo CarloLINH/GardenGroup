@@ -1,0 +1,27 @@
+﻿@model GardenGroup.Models.Ticket
+
+<div class="alert alert-danger mt-4">
+    <h2>Delete Confirmation</h2>
+    <h4>Are you sure you want to permanently delete Ticket #@Model.TicketId?</h4>
+</div>
+
+<div>
+    <dl class="row mt-4">
+        <dt class="col-sm-2">Title</dt>
+        <dd class="col-sm-10">@Model.Title</dd>
+
+        <dt class="col-sm-2">Status</dt>
+        <dd class="col-sm-10"><span class="badge bg-info text-dark">@Model.Status</span></dd>
+
+        <dt class="col-sm-2">Description</dt>
+        <dd class="col-sm-10">@Model.Description</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post">
+ 
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <input type="submit" value="Yes, Delete Ticket" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-secondary ms-2">Nevermind, take me back</a>
+    </form>
+</div>
