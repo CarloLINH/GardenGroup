@@ -8,7 +8,7 @@ public static class MongoIndexInitializer
 {
     public static void EnsureIndexes(IMongoDatabase db)
     {
-        var tickets = db.GetCollection<Ticket>(CollectionNames.Tickets);
+        var tickets = db.GetCollection<Ticket>("tickets");
         var keys = Builders<Ticket>.IndexKeys;
 
         // Old single-field indexes are now a prefix of the compound indexes, so they only cost writes.

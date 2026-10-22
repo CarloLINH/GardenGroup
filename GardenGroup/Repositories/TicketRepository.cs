@@ -9,10 +9,7 @@ namespace GardenGroup.Repositories
 
         private readonly IMongoCollection<Ticket> _tickets;
 
-        public TicketRepository(IMongoDatabase database)
-        {
-            _tickets = database.GetCollection<Ticket>(CollectionNames.Tickets);
-        }
+        public TicketRepository(IMongoDatabase database) => _tickets = database.GetCollection<Ticket>("tickets");
 
         public void CreateTicket(Ticket ticket)
         {
