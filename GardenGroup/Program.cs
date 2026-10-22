@@ -38,6 +38,11 @@ namespace GardenGroup
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                MongoIndexInitializer.EnsureIndexes(scope.ServiceProvider.GetRequiredService<IMongoDatabase>());
+            }
+
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {

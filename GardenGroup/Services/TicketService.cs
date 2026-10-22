@@ -1,5 +1,7 @@
-﻿using GardenGroup.Models;
+﻿using GardenGroup.Enums;
+using GardenGroup.Models;
 using GardenGroup.Repositories;
+using MongoDB.Driver;
 
 namespace GardenGroup.Services
 {
@@ -21,17 +23,29 @@ namespace GardenGroup.Services
         {
             return _ticketRepository.GetTicketById(id);
         }
+        public List<Ticket> GetTickets(Statuses? status, int? assignedToId, bool newestFirst)
+        {
+            return _ticketRepository.GetTickets(status, assignedToId, newestFirst);
+        }
 
         public void CreateTicket(Ticket ticket)
         {
-           
-            var allTickets = _ticketRepository.GetAllTickets();
-            var lastTicket = allTickets.OrderByDescending(t => t.TicketId).FirstOrDefault();
-
-            ticket.TicketId = (lastTicket == null) ? 1 : lastTicket.TicketId + 1;
-
             ticket.CreatedAt = DateTime.Now;
-            _ticketRepository.CreateTicket(ticket);
+
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                ticket.TicketId = _ticketRepository.GetLastTicketId() + 1;
+                try
+                {
+                    _ticketRepository.CreateTicket(ticket);
+                    return;
+                }
+                catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+                {
+                    ticket.Id = null;
+                }
+            }
+            throw new InvalidOperationException("Could not generate a unique ticket id.");
         }
 
         public void UpdateTicket(Ticket ticket)
