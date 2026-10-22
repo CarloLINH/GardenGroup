@@ -9,7 +9,7 @@ public sealed class EmployeeRepository : IEmployeeRepository
 
     public EmployeeRepository(IMongoDatabase database)
     {
-        _employees = database.GetCollection<Employee>(CollectionNames.Employees);
+        _employees = database.GetCollection<Employee>("employees");
     }
 
     public async Task<IReadOnlyList<Employee>> GetAllAsync()

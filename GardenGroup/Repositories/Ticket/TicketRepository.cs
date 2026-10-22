@@ -11,7 +11,7 @@ namespace GardenGroup.Repositories
 
         public TicketRepository(IMongoDatabase database)
         {
-            _tickets = database.GetCollection<Ticket>(CollectionNames.Tickets);
+            _tickets = database.GetCollection<Ticket>("tickets");
         }
 
         public void CreateTicket(Ticket ticket)
