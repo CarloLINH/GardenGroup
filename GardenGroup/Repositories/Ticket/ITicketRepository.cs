@@ -1,5 +1,6 @@
 ﻿using GardenGroup.Enums;
 using GardenGroup.Models;
+using GardenGroup.ViewModels;
 
 namespace GardenGroup.Repositories
 {
@@ -8,6 +9,7 @@ namespace GardenGroup.Repositories
         List<Ticket> GetAllTickets();
 
         Ticket? GetTicketById(string id);
+        TicketDetails? GetTicketWithEmployees(string id);
 
         void CreateTicket(Ticket ticket);
 

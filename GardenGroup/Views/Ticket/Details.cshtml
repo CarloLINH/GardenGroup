@@ -1,0 +1,25 @@
+﻿@model GardenGroup.ViewModels.TicketDetails
+
+<h1>Ticket @Model.TicketId</h1>
+
+<dl>
+    <dt>Title</dt>
+    <dd>@Model.Title</dd>
+
+    <dt>Status</dt>
+    <dd>@Model.Status</dd>
+
+    <dt>Reported by</dt>
+    <dd>
+        @(Model.Reporter is null
+            ? "Unknown employee"
+            : $"{Model.Reporter.FirstName} {Model.Reporter.LastName}")
+    </dd>
+
+    <dt>Assigned to</dt>
+    <dd>
+        @(Model.Assignee is null
+            ? "Unassigned"
+            : $"{Model.Assignee.FirstName} {Model.Assignee.LastName}")
+    </dd>
+</dl>
