@@ -163,7 +163,7 @@ namespace GardenGroup.Repositories
 
             try
             {
-                ObjectId.Parse(id);
+                ObjectId.Parse(ticket.Id);
             }
             catch (FormatException)
             {
