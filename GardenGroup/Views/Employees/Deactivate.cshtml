@@ -1,0 +1,16 @@
+@model Employee
+
+@{
+	ViewData["Title"] = "Deactivate employee";
+}
+
+<h1>Deactivate employee</h1>
+<div class="alert alert-warning">
+	Deactivating <strong>@Model.FirstName @Model.LastName</strong> prevents the employee from being active while retaining the employee record and its identifier for existing ticket history.
+</div>
+
+<form asp-action="Deactivate" method="post">
+	<input type="hidden" name="id" value="@Model.Id" />
+	<button type="submit" class="btn btn-danger">Deactivate employee</button>
+	<a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+</form>
