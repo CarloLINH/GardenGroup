@@ -1,14 +1,11 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 
-namespace GardenGroup.Models;   
+namespace GardenGroup.Models;
 
 [BsonIgnoreExtraElements]
 public class StatusPercentage
 {
-    
-    public string Status { get; set; } = "";
-
-    public int Count { get; set; }
-
-    public double Percentage { get; set; }
+    [BsonElement("status")] public string Status { get; set; } = "";
+    [BsonElement("count")] public int Count { get; set; }
+    [BsonElement("percentage")] public double Percentage { get; set; }
 }
