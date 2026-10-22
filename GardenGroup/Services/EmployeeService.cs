@@ -58,6 +58,19 @@ public sealed class EmployeeService : IEmployeeService
     public async Task CreateAsync(Employee employee, string password)
     {
         EnsureValidRole(employee.Role);
+
+        if (await EmployeeIdExistsAsync(employee.EmployeeId))
+        {
+            throw new InvalidOperationException(
+                "An employee with this employee ID already exists.");
+        }
+
+        if (await EmailExistsAsync(employee.Email))
+        {
+            throw new InvalidOperationException(
+                "An employee with this email address already exists.");
+        }
+
         employee.EmployeeId = await GetNextEmployeeIdAsync();
         employee.Password = _passwordHasher.HashPassword(employee, password);
         await _employeeRepository.InsertAsync(employee);
@@ -66,6 +79,32 @@ public sealed class EmployeeService : IEmployeeService
     public async Task UpdateAsync(Employee employee, string? password)
     {
         EnsureValidRole(employee.Role);
+
+        if (string.IsNullOrWhiteSpace(employee.Id))
+        {
+            throw new ArgumentException(
+                "The employee identifier is invalid.",
+                nameof(employee));
+        }
+
+        if (!await ObjectIdExistsAsync(employee.Id))
+        {
+            throw new KeyNotFoundException("Employee was not found.");
+        }
+
+        if (await EmployeeIdExistsAsync(
+            employee.EmployeeId,
+            employee.Id))
+        {
+            throw new InvalidOperationException(
+                "An employee with this employee ID already exists.");
+        }
+
+        if (await EmailExistsAsync(employee.Email, employee.Id))
+        {
+            throw new InvalidOperationException(
+                "An employee with this email address already exists.");
+        }
 
         if (!string.IsNullOrWhiteSpace(password))
         {
@@ -88,5 +127,9 @@ public sealed class EmployeeService : IEmployeeService
         {
             throw new ArgumentException("The selected role is not valid.", nameof(role));
         }
+    }
+    private async Task<bool> ObjectIdExistsAsync(string id)
+    {
+        return await _employeeRepository.GetByIdAsync(id) is not null;
     }
 }

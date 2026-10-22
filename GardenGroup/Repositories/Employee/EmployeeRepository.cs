@@ -1,4 +1,5 @@
 using GardenGroup.Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace GardenGroup.Repositories;
@@ -21,6 +22,16 @@ public sealed class EmployeeRepository : IEmployeeRepository
 
     public Task<Employee?> GetByIdAsync(string id)
     {
+        try
+        {
+            ObjectId.Parse(id);
+        }
+        catch (FormatException)
+        {
+            return Task.FromResult<Employee?>(null);
+
+        }
+
         return _employees.Find(employee => employee.Id == id).FirstOrDefaultAsync();
     }
 
@@ -55,6 +66,15 @@ public sealed class EmployeeRepository : IEmployeeRepository
 
     public Task DeactivateAsync(string id)
     {
+        try
+        {
+            ObjectId.Parse(id);
+        }
+        catch (FormatException)
+        {
+            return Task.CompletedTask;
+        }
+
         var update = Builders<Employee>.Update.Set(employee => employee.IsActive, false);
         return _employees.UpdateOneAsync(employee => employee.Id == id, update);
     }

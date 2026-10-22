@@ -1,7 +1,6 @@
 using GardenGroup.Models;
 using GardenGroup.Repositories;
 using GardenGroup.Services;
-using GardenGroup.Models;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
@@ -21,7 +20,7 @@ namespace GardenGroup
 
             var connectionString = builder.Configuration.GetConnectionString("MongoDb");
             builder.Services.AddSingleton<IMongoCollection<Employee>>(serviceProvider =>
-            serviceProvider.GetRequiredService<IMongoDatabase>().GetCollection<Employee>("Employees"));
+            serviceProvider.GetRequiredService<IMongoDatabase>().GetCollection<Employee>("employees"));
             builder.Services.AddScoped<ITicketQueries, TicketQueries>();
 
             if (connectionString == null)
