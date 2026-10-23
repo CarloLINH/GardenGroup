@@ -36,7 +36,26 @@ namespace GardenGroup.Repositories
 
         public void UpdateTicket(Ticket ticket)
         {
-            _tickets.ReplaceOne(t => t.Id == ticket.Id, ticket);
+            var filter = Builders<Ticket>.Filter.Eq(t => t.Id, ticket.Id);
+
+            var update = Builders<Ticket>.Update
+                .Set(t => t.Title, ticket.Title)
+                .Set(t => t.Description, ticket.Description)
+                .Set(t => t.AssignedToId, ticket.AssignedToId)
+                .Set(t => t.Priority, ticket.Priority)
+                .Set(t => t.Status, ticket.Status)
+                .Set(t => t.UpdatedAt, DateTime.Now);
+
+            if (ticket.Status == Statuses.Resolved && ticket.ResolvedAt == null)
+            {
+                update = update.Set(t => t.ResolvedAt, DateTime.Now);
+            }
+            if (ticket.Status == Statuses.Closed && ticket.ClosedAt == null)
+            {
+                update = update.Set(t => t.ClosedAt, DateTime.Now);
+            }
+
+            _tickets.UpdateOne(filter, update);
         }
 
         //Indexes for performance optimization
