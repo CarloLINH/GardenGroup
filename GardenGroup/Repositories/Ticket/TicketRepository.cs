@@ -1,4 +1,5 @@
-﻿using GardenGroup.Enums;
+﻿using GardenGroup.Models;
+using GardenGroup.Enums;
 using GardenGroup.Models;
 using GardenGroup.ViewModels;
 using MongoDB.Bson;
@@ -55,15 +56,6 @@ namespace GardenGroup.Repositories
 
         public Ticket? GetTicketById(string id)
         {
-            try
-            {
-                ObjectId.Parse(id);
-            }
-            catch
-            {
-                return null;
-            }
-
             return _tickets.Find(t => t.Id == id).FirstOrDefault();
         }
 
@@ -159,24 +151,26 @@ namespace GardenGroup.Repositories
 
         public void UpdateTicket(Ticket ticket)
         {
-            ArgumentNullException.ThrowIfNull(ticket);
+            var filter = Builders<Ticket>.Filter.Eq(t => t.Id, ticket.Id);
 
-            try
-            {
-                ObjectId.Parse(ticket.Id);
-            }
-            catch (FormatException)
-            {
-                throw new ArgumentException("Invalid ticket identifier.", nameof(ticket));
-            }
-            
+            var update = Builders<Ticket>.Update
+                .Set(t => t.Title, ticket.Title)
+                .Set(t => t.Description, ticket.Description)
+                .Set(t => t.AssignedToId, ticket.AssignedToId)
+                .Set(t => t.Priority, ticket.Priority)
+                .Set(t => t.Status, ticket.Status)
+                .Set(t => t.UpdatedAt, DateTime.Now);
 
-            var result = _tickets.ReplaceOne(t => t.Id == ticket.Id, ticket);
-
-            if (result.MatchedCount == 0)
+            if (ticket.Status == Statuses.Resolved && ticket.ResolvedAt == null)
             {
-                throw new KeyNotFoundException("Ticket was not found.");
+                update = update.Set(t => t.ResolvedAt, DateTime.Now);
             }
+            if (ticket.Status == Statuses.Closed && ticket.ClosedAt == null)
+            {
+                update = update.Set(t => t.ClosedAt, DateTime.Now);
+            }
+
+            _tickets.UpdateOne(filter, update);
         }
 
         //Indexes for performance optimization
