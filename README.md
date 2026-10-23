@@ -60,7 +60,7 @@ The app uses the database `helpdesk` with the collections `tickets` and `employe
 
 ### 5. Project Documentation
 
-The `docs/` directory contains the project documentation covering:
+The `Docs/` directory contains the project documentation covering:
 
 - **Database design and technology choices:** MongoDB collections, document relationships, configuration, and the decision to store tickets and employees separately.
 - **CRUD implementation:** Create, Read, Update, and Delete operations for tickets and employees, including the relevant repository and service methods.
