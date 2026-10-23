@@ -58,11 +58,13 @@ dotnet run
 
 The app uses the database `helpdesk` with the collections `tickets` and `employees`. Indexes are created automatically when the application starts.
 
-## 5. Project Documentation
+### 5. Project Documentation
 
-The `docs/` directory contains the project documentation:
-- Database design and development decisions.
-- CRUD implementation and query explanations.
-- Index choices linked to queries, with `explain()` evidence.
-- Alternative solutions and trade-offs.
-- Distribution of work among team members.
+The `docs/` directory contains the project documentation covering:
+
+- **Database design and technology choices:** MongoDB collections, document relationships, configuration, and the decision to store tickets and employees separately.
+- **CRUD implementation:** Create, Read, Update, and Delete operations for tickets and employees, including the relevant repository and service methods.
+- **Queries and indexes:** Ticket filtering and sorting, employee lookups, dashboard aggregations, and the indexes defined in `MongoIndexInitializer`.
+- **Alternatives and trade-offs:** Database query strategies, compound indexes, ticket number generation, projections, aggregations, and employee lookups using `$lookup`.
+- **Distribution of work:** Team members' responsibilities and their associated files and classes.
+- **Testing and setup:** CRUD test descriptions, MongoDB configuration, and instructions for running the application.
