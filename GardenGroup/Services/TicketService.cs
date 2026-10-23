@@ -1,6 +1,7 @@
 ﻿using GardenGroup.Enums;
 using GardenGroup.Models;
 using GardenGroup.Repositories;
+using GardenGroup.ViewModels;
 using MongoDB.Driver;
 
 namespace GardenGroup.Services
@@ -19,10 +20,16 @@ namespace GardenGroup.Services
             return _ticketRepository.GetAllTickets();
         }
 
-        public Ticket GetTicketById(string id)
+        public Ticket? GetTicketById(string id)
         {
             return _ticketRepository.GetTicketById(id);
         }
+
+        public TicketDetails? GetTicketWithEmployees(string id)
+        {
+            return _ticketRepository.GetTicketWithEmployees(id);
+        }
+
         public List<Ticket> GetTickets(Statuses? status, int? assignedToId, bool newestFirst)
         {
             return _ticketRepository.GetTickets(status, assignedToId, newestFirst);

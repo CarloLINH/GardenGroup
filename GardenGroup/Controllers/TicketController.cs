@@ -2,6 +2,7 @@
 using GardenGroup.Models;
 using GardenGroup.Services;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 
 namespace GardenGroup.Controllers
 {
@@ -79,6 +80,27 @@ namespace GardenGroup.Controllers
         {
             _ticketService.DeleteTicket(id);
             return RedirectToAction(nameof(Index));
+        }
+
+        public ActionResult Details(string id)
+        {
+            try
+            {
+                MongoDB.Bson.ObjectId.Parse(id);
+            }
+            catch (FormatException)
+            {
+                return BadRequest("The ticket identifier is invalid.");
+            }
+
+            var ticket = _ticketService.GetTicketWithEmployees(id);
+
+            if (ticket is null)
+            {
+                return NotFound();
+            }
+
+            return View(ticket);
         }
     }
 }

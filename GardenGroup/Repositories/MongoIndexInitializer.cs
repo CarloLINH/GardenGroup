@@ -3,12 +3,21 @@ using MongoDB.Driver;
 
 namespace GardenGroup.Repositories;
 
-//Creates all indexes once at application startup
+// Creates all MongoDB indexes once at application startup.
 public static class MongoIndexInitializer
 {
     public static void EnsureIndexes(IMongoDatabase db)
     {
         var tickets = db.GetCollection<Ticket>("tickets");
+        var employees = db.GetCollection<Employee>("employees");
+
+        CreateTicketIndexes(tickets);
+        CreateEmployeeIndexes(employees);
+    }
+
+    private static void CreateTicketIndexes(
+        IMongoCollection<Ticket> tickets)
+    {
         var keys = Builders<Ticket>.IndexKeys;
 
         // Old single-field indexes are now a prefix of the compound indexes, so they only cost writes.
@@ -40,15 +49,31 @@ public static class MongoIndexInitializer
                 keys.Ascending(t => t.ReportById).Ascending(t => t.Status),
                 new CreateIndexOptions { Name = "ix_reportedBy_status" }),
         });
+
+        CreateUniqueIndex(tickets, keys.Ascending(ticket => ticket.TicketId), "ux_ticketId");
+    }
+
+    private static void CreateEmployeeIndexes(
+        IMongoCollection<Employee> employees)
+    {
+        var keys = Builders<Employee>.IndexKeys;
+
+        CreateUniqueIndex( employees, keys.Ascending(employee => employee.EmployeeId), "ux_employeeId");
+
+        CreateUniqueIndex( employees, keys.Ascending(employee => employee.Email), "ux_employee_email");
+    }
+
+    private static void CreateUniqueIndex<TDocument>(IMongoCollection<TDocument> collection, IndexKeysDefinition<TDocument> keys, string indexName)
+    {
         try
         {
-            tickets.Indexes.CreateOne(new CreateIndexModel<Ticket>(
-                keys.Ascending(t => t.TicketId),
-                new CreateIndexOptions { Unique = true, Name = "ux_ticketId" }));
+            collection.Indexes.CreateOne(new CreateIndexModel<TDocument>(
+                    keys,
+                    new CreateIndexOptions { Name = indexName, Unique = true }));
         }
         catch (MongoCommandException ex)
         {
-            Console.WriteLine($"Unique index on ticketId not created (duplicates in data?): {ex.Message}");
+            Console.WriteLine($"Unique index '{indexName}' was not created: {ex.Message}");
         }
     }
 }
