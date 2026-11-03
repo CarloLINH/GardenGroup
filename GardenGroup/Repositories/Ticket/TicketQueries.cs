@@ -5,15 +5,13 @@ using MongoDB.Driver;
 
 namespace GardenGroup.Repositories;
 
-/// <summary>
-/// MongoDB aggregation pipelines for the dashboard statistics.
-/// </summary>
+// MongoDB aggregation pipelines for the dashboard statistics.
 public class TicketQueries : ITicketQueries
 {
     private readonly IMongoCollection<Ticket> _tickets;
 
     public TicketQueries(IMongoDatabase db) => _tickets = db.GetCollection<Ticket>("tickets");
-    /// <inheritdoc />
+    //inheritdoc
     public async Task<List<StatusPercentage>> GetStatusPercentagesAsync(int? reportedBy)
     {
         var pipeline = new List<BsonDocument>();
@@ -53,7 +51,6 @@ public class TicketQueries : ITicketQueries
 
         return rows;
     }
-    /// <inheritdoc />
     public Task<List<EmployeeWorkload>> GetEmployeeWorkloadsAsync() =>
         _tickets.Aggregate<EmployeeWorkload>(new[]
         {
