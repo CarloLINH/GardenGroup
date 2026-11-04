@@ -1,5 +1,6 @@
 using GardenGroup.Models;
 using GardenGroup.Repositories;
+using GardenGroup.Security;
 using Microsoft.AspNetCore.Identity;
 
 namespace GardenGroup.Services;
@@ -7,7 +8,7 @@ namespace GardenGroup.Services;
 public sealed class EmployeeService : IEmployeeService
 {
     private static readonly IReadOnlyList<string> Roles =
-        new[] { "manager", "admin", "agent", "employee" };
+        new[] { AppRoles.RegularEmployee, AppRoles.ServiceDesk };
 
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IPasswordHasher<Employee> _passwordHasher;
@@ -18,6 +19,20 @@ public sealed class EmployeeService : IEmployeeService
     {
         _employeeRepository = employeeRepository;
         _passwordHasher = passwordHasher;
+    }
+
+    public async Task<Employee?> AuthenticateAsync(string email, string password)
+    {
+        var employee = await _employeeRepository.GetByEmailAsync(email.Trim().ToLowerInvariant());
+        if (employee is null || !employee.Active || string.IsNullOrWhiteSpace(employee.PasswordHash))
+        {
+            return null;
+        }
+
+        var result = _passwordHasher.VerifyHashedPassword(employee, employee.PasswordHash, password);
+        return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded
+            ? employee
+            : null;
     }
 
     public IReadOnlyList<string> AllowedRoles => Roles;
@@ -71,8 +86,8 @@ public sealed class EmployeeService : IEmployeeService
                 "An employee with this email address already exists.");
         }
 
-        employee.EmployeeId = await GetNextEmployeeIdAsync();
-        employee.Password = _passwordHasher.HashPassword(employee, password);
+        employee.Email = employee.Email.Trim().ToLowerInvariant();
+        employee.PasswordHash = _passwordHasher.HashPassword(employee, password);
         await _employeeRepository.InsertAsync(employee);
     }
 
@@ -100,6 +115,7 @@ public sealed class EmployeeService : IEmployeeService
                 "An employee with this employee ID already exists.");
         }
 
+        employee.Email = employee.Email.Trim().ToLowerInvariant();
         if (await EmailExistsAsync(employee.Email, employee.Id))
         {
             throw new InvalidOperationException(
@@ -108,7 +124,7 @@ public sealed class EmployeeService : IEmployeeService
 
         if (!string.IsNullOrWhiteSpace(password))
         {
-            employee.Password = _passwordHasher.HashPassword(employee, password);
+            employee.PasswordHash = _passwordHasher.HashPassword(employee, password);
             employee.PasswordResetTime = null;
             employee.PasswordResetLink = null;
         }

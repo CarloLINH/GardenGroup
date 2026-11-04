@@ -7,6 +7,7 @@ public interface IEmployeeService
     IReadOnlyList<string> AllowedRoles { get; }
     Task<IReadOnlyList<Employee>> GetAllAsync();
     Task<Employee?> GetByIdAsync(string? id);
+    Task<Employee?> AuthenticateAsync(string email, string password);
     Task<int> GetNextEmployeeIdAsync();
     Task<bool> EmployeeIdExistsAsync(int employeeId, string? excludedId = null);
     Task<bool> EmailExistsAsync(string email, string? excludedId = null);

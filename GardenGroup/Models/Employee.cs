@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace GardenGroup.Models;
 
+[BsonIgnoreExtraElements]
 public sealed class Employee
 {
     [BsonId]
@@ -22,8 +23,8 @@ public sealed class Employee
     [BsonElement("email")]
     public string Email { get; set; } = string.Empty;
 
-    [BsonElement("password")]
-    public string Password { get; set; } = string.Empty;
+    [BsonElement("passwordHash")]
+    public string PasswordHash { get; set; } = string.Empty;
 
     [BsonElement("role")]
     public string Role { get; set; } = string.Empty;

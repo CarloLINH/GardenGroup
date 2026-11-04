@@ -1,8 +1,10 @@
 ﻿using GardenGroup.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using GardenGroup.Repositories;
 namespace GardenGroup.Controllers
 {
+    [Authorize]
     public class DashboardController : Controller
     {
         private readonly ITicketQueries _queries;
