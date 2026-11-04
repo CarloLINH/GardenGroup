@@ -1,11 +1,12 @@
-﻿using GardenGroup.Enums;
+﻿// Author: Carlo
+using GardenGroup.Enums;
 using GardenGroup.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace GardenGroup.Repositories;
 
-/// <inheritdoc />
+/// <summary>MongoDB aggregation pipelines for the dashboard statistics.</summary>
 public class TicketQueries : ITicketQueries
 {
     private readonly IMongoCollection<Ticket> _tickets;
@@ -17,48 +18,48 @@ public class TicketQueries : ITicketQueries
     {
         var pipeline = new List<BsonDocument>();
 
-        // 1. Filter eerst: kleinere set voor de $group en een index op reportedBy kan gebruikt worden.
+        // Filter first: smaller set for the $group, and an index on reportedBy can be used.
         if (reportedBy.HasValue)
             pipeline.Add(new BsonDocument("$match", new BsonDocument("reportedBy", reportedBy.Value)));
 
-        // 2. Categorie afleiden per ticket. Volgorde van de branches is belangrijk:
-        //    Open wint altijd (ook als een heropend ticket nog een oude resolvedAt heeft).
-        //    Resolved = status Resolved OF resolvedAt gevuld (ook een gesloten, eerder opgelost ticket).
-        //    Alles wat overblijft is gesloten zonder oplossing.
+        // Status is compared in lower case, so "Open", "open" and "OPEN" in the database all count the same.
+        static BsonDocument StatusIs(string lowerCaseValue) =>
+            new BsonDocument("$eq", new BsonArray { new BsonDocument("$toLower", "$status"), lowerCaseValue });
+
+        var hasResolvedAt = new BsonDocument("$ne", new BsonArray
+        {
+            new BsonDocument("$ifNull", new BsonArray { "$resolvedAt", BsonNull.Value }),
+            BsonNull.Value
+        });
+
+        // Derive the dashboard category per ticket. The order of the branches matters:
+        //  1. Open always wins (a reopened ticket may still have an old resolvedAt).
+        //  2. Resolved = status Resolved, or resolvedAt filled (a ticket that was solved and then closed).
+        //  3. Closed without a resolvedAt = closed without resolve.
+        //  Default: everything else is not yet solved, so it counts as open.
         var category = new BsonDocument("$switch", new BsonDocument
         {
             { "branches", new BsonArray
                 {
+                    new BsonDocument { { "case", StatusIs("open") }, { "then", "Open" } },
                     new BsonDocument
                     {
-                        { "case", new BsonDocument("$eq", new BsonArray { "$status", "Open" }) },
-                        { "then", "Open" }
-                    },
-                    new BsonDocument
-                    {
-                        { "case", new BsonDocument("$or", new BsonArray
-                            {
-                                new BsonDocument("$eq", new BsonArray { "$status", "Resolved" }),
-                                new BsonDocument("$ne", new BsonArray
-                                {
-                                    new BsonDocument("$ifNull", new BsonArray { "$resolvedAt", BsonNull.Value }),
-                                    BsonNull.Value
-                                })
-                            }) },
+                        { "case", new BsonDocument("$or", new BsonArray { StatusIs("resolved"), hasResolvedAt }) },
                         { "then", "Resolved" }
-                    }
+                    },
+                    new BsonDocument { { "case", StatusIs("closed") }, { "then", "ClosedWithoutResolve" } }
                 } },
-            { "default", "ClosedWithoutResolve" }
+            { "default", "Open" }
         });
 
-        // 3. Tellen per categorie.
+        // Count per category.
         pipeline.Add(new BsonDocument("$group", new BsonDocument
         {
             { "_id", category },
             { "count", new BsonDocument("$sum", 1) }
         }));
 
-        // 4. Totaal berekenen en de rijen bewaren.
+        // Calculate the total and keep the rows.
         pipeline.Add(new BsonDocument("$group", new BsonDocument
         {
             { "_id", BsonNull.Value },
@@ -66,7 +67,7 @@ public class TicketQueries : ITicketQueries
             { "rows", new BsonDocument("$push", new BsonDocument { { "category", "$_id" }, { "count", "$count" } }) }
         }));
 
-        // 5. Terug naar één document per categorie en het percentage uitrekenen.
+        // One document per category again, and calculate the percentage.
         pipeline.Add(new BsonDocument("$unwind", "$rows"));
         pipeline.Add(new BsonDocument("$project", new BsonDocument
         {
@@ -85,8 +86,8 @@ public class TicketQueries : ITicketQueries
 
         var rows = await _tickets.Aggregate<StatusPercentage>(pipeline).ToListAsync();
 
-        // $group geeft geen rij voor een categorie zonder tickets: aanvullen met 0
-        // en in vaste volgorde teruggeven (Open, Resolved, ClosedWithoutResolve).
+        // $group returns no row for a category without tickets: add it with 0 (no division by zero),
+        // and return the categories in a fixed order.
         foreach (var c in Enum.GetValues<TicketCategory>())
             if (rows.All(r => r.Category != c))
                 rows.Add(new StatusPercentage { Category = c });
@@ -98,9 +99,9 @@ public class TicketQueries : ITicketQueries
     public Task<List<EmployeeWorkload>> GetEmployeeWorkloadsAsync() =>
         _tickets.Aggregate<EmployeeWorkload>(new[]
         {
-            // Tickets zonder behandelaar tellen niet mee.
+            // Tickets without an assignee do not count.
             new BsonDocument("$match", new BsonDocument("assignedTo", new BsonDocument("$ne", BsonNull.Value))),
-            // Eerst groeperen, dan pas $lookup: één lookup per medewerker in plaats van één per ticket.
+            // Group first, then $lookup: one lookup per employee instead of one per ticket.
             new BsonDocument("$group", new BsonDocument
             {
                 { "_id", "$assignedTo" },
@@ -109,7 +110,7 @@ public class TicketQueries : ITicketQueries
             new BsonDocument("$lookup", new BsonDocument
             {
                 { "from", "employees" }, { "localField", "_id" },
-                { "foreignField", "_id" }, { "as", "employee" }
+                { "foreignField", "employeeId" }, { "as", "employee" }
             }),
             new BsonDocument("$set", new BsonDocument("employee", new BsonDocument("$first", "$employee"))),
             new BsonDocument("$project", new BsonDocument
@@ -120,7 +121,7 @@ public class TicketQueries : ITicketQueries
                 { "name", new BsonDocument("$ifNull", new BsonArray
                     {
                         new BsonDocument("$concat", new BsonArray { "$employee.firstName", " ", "$employee.lastName" }),
-                        "Onbekend"
+                        "Unknown"
                     }) }
             }),
             new BsonDocument("$sort", new BsonDocument("ticketCount", -1))
