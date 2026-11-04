@@ -34,8 +34,9 @@
 		<label asp-for="Role" class="form-label"></label>
 		<select asp-for="Role" class="form-select">
 			<option value="">Select a role</option>
-			<option value="regular-employee">Regular employee</option>
-			<option value="Service Desk">Service Desk</option>
+			<option value="employee">Employee</option>
+			<option value="agent">Agent</option>
+			<option value="manager">Manager</option>
 		</select>
 		<span asp-validation-for="Role" class="text-danger"></span>
 	</div>

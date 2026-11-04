@@ -4,7 +4,6 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace GardenGroup.Models;
 
-[BsonIgnoreExtraElements]
 public sealed class Employee
 {
     [BsonId]

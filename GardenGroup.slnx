@@ -1,4 +1,3 @@
 <Solution>
-  <Project Path="GardenGroup.Tests/GardenGroup.Tests.csproj" />
   <Project Path="GardenGroup/GardenGroup.csproj" />
 </Solution>

@@ -2,11 +2,10 @@ using GardenGroup.Models;
 using GardenGroup.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using GardenGroup.Security;
 
 namespace GardenGroup.Controllers;
 
-[Authorize(Roles = AppRoles.ServiceDesk)]
+[Authorize]
 public sealed class EmployeesController : Controller
 {
     private readonly IEmployeeService _employeeService;
@@ -44,12 +43,6 @@ public sealed class EmployeesController : Controller
         model.LastName = model.LastName.Trim();
         model.Email = model.Email.Trim();
         model.Role = model.Role.Trim();
-
-        if (!_employeeService.IsValidRole(model.Role))
-        {
-            ModelState.AddModelError(nameof(model.Role), "Please select a valid role.");
-        }
-
         if (string.IsNullOrWhiteSpace(model.Password))
         {
             ModelState.AddModelError(nameof(model.Password), "A password is required for a new employee.");
@@ -117,12 +110,6 @@ public sealed class EmployeesController : Controller
         model.LastName = model.LastName.Trim();
         model.Email = model.Email.Trim();
         model.Role = model.Role.Trim();
-
-        if (!_employeeService.IsValidRole(model.Role))
-        {
-            ModelState.AddModelError(nameof(model.Role), "Please select a valid role.");
-        }
-
         if (await _employeeService.EmailExistsAsync(model.Email, id) && ModelState.IsValid)
         {
             ModelState.AddModelError(nameof(model.Email), "This email address is already in use.");

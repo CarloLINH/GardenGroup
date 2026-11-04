@@ -1,15 +1,11 @@
 using GardenGroup.Models;
 using GardenGroup.Repositories;
-using GardenGroup.Security;
 using Microsoft.AspNetCore.Identity;
 
 namespace GardenGroup.Services;
 
 public sealed class EmployeeService : IEmployeeService
 {
-    private static readonly IReadOnlyList<string> Roles =
-        new[] { AppRoles.RegularEmployee, AppRoles.ServiceDesk };
-
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IPasswordHasher<Employee> _passwordHasher;
 
@@ -34,8 +30,6 @@ public sealed class EmployeeService : IEmployeeService
             ? employee
             : null;
     }
-
-    public IReadOnlyList<string> AllowedRoles => Roles;
 
     public Task<IReadOnlyList<Employee>> GetAllAsync()
     {
@@ -65,15 +59,9 @@ public sealed class EmployeeService : IEmployeeService
         return _employeeRepository.ExistsByEmailAsync(email, excludedId);
     }
 
-    public bool IsValidRole(string role)
-    {
-        return Roles.Contains(role, StringComparer.Ordinal);
-    }
 
     public async Task CreateAsync(Employee employee, string password)
     {
-        EnsureValidRole(employee.Role);
-
         if (await EmployeeIdExistsAsync(employee.EmployeeId))
         {
             throw new InvalidOperationException(
@@ -93,7 +81,6 @@ public sealed class EmployeeService : IEmployeeService
 
     public async Task UpdateAsync(Employee employee, string? password)
     {
-        EnsureValidRole(employee.Role);
 
         if (string.IsNullOrWhiteSpace(employee.Id))
         {
@@ -137,13 +124,6 @@ public sealed class EmployeeService : IEmployeeService
         return _employeeRepository.DeactivateAsync(id);
     }
 
-    private void EnsureValidRole(string role)
-    {
-        if (!IsValidRole(role))
-        {
-            throw new ArgumentException("The selected role is not valid.", nameof(role));
-        }
-    }
     private async Task<bool> ObjectIdExistsAsync(string id)
     {
         return await _employeeRepository.GetByIdAsync(id) is not null;
