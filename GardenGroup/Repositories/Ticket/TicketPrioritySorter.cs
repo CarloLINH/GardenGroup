@@ -13,17 +13,22 @@ public class TicketPrioritySorter : ITicketPrioritySorter
     public TicketPrioritySorter(IMongoDatabase db) => _tickets = db.GetCollection<Ticket>("tickets");
 
     public async Task<List<Ticket>> GetSortedAsync(
-        TicketSortOrder order, int? reportedBy, Statuses? status, int page, int pageSize)
+    TicketSortOrder order, int? assignedTo, Statuses? status, int page, int pageSize)
     {
         if (!Enum.IsDefined(order)) throw new ArgumentOutOfRangeException(nameof(order));
         if (page < 0) throw new ArgumentOutOfRangeException(nameof(page));
         if (pageSize < 1) throw new ArgumentOutOfRangeException(nameof(pageSize));
+
         pageSize = Math.Min(pageSize, MaxPageSize);
 
         var f = Builders<Ticket>.Filter;
         var filter = f.Empty;
-        if (reportedBy.HasValue) filter &= f.Eq(t => t.ReportById, reportedBy.Value);
-        if (status.HasValue) filter &= f.Eq(t => t.Status, status.Value);
+
+        if (assignedTo.HasValue)
+            filter &= f.Eq(t => t.AssignedToId, assignedTo.Value);
+
+        if (status.HasValue)
+            filter &= f.Eq(t => t.Status, status.Value);
 
         return await _tickets.Find(filter)
             .Project<Ticket>(Builders<Ticket>.Projection.Exclude(t => t.Description))
