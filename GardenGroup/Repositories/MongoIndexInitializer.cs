@@ -48,7 +48,25 @@ public static class MongoIndexInitializer
             new CreateIndexModel<Ticket>(
                 keys.Ascending(t => t.ReportById).Ascending(t => t.Status),
                 new CreateIndexOptions { Name = "ix_reportedBy_status" }),
-        });
+
+            //My tickets (regular employee). Newest first
+            new CreateIndexModel<Ticket>(
+                keys.Ascending(t => t.ReportById).Descending(t => t.CreatedAt),
+                new CreateIndexOptions { Name = "ix_reportedBy_createdAt" }),
+
+            //Sort by priority (TicketPrioritySorter). CreatedAt and Id keep the order fixed for paging.
+            new CreateIndexModel<Ticket>(
+                keys.Descending(t => t.Priority).Descending(t => t.CreatedAt).Descending(t => t.Id),
+                new CreateIndexOptions { Name = "ix_priority_sort" }),
+
+            new CreateIndexModel<Ticket>(
+                keys.Ascending(t => t.ReportById).Descending(t => t.Priority).Descending(t => t.CreatedAt).Descending(t => t.Id),
+               new CreateIndexOptions { Name = "ix_reporter_priority_sort" }),
+
+            new CreateIndexModel<Ticket>(
+                keys.Ascending(t => t.Status).Descending(t => t.Priority).Descending(t => t.CreatedAt).Descending(t => t.Id),
+                new CreateIndexOptions { Name = "ix_status_priority_sort" }),
+         });
 
         CreateUniqueIndex(tickets, keys.Ascending(ticket => ticket.TicketId), "ux_ticketId");
     }

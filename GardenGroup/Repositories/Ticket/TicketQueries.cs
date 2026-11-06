@@ -22,9 +22,10 @@ public class TicketQueries : ITicketQueries
         if (reportedBy.HasValue)
             pipeline.Add(new BsonDocument("$match", new BsonDocument("reportedBy", reportedBy.Value)));
 
-        // Status is compared in lower case, so "Open", "open" and "OPEN" in the database all count the same.
-        static BsonDocument StatusIs(string lowerCaseValue) =>
-            new BsonDocument("$eq", new BsonArray { new BsonDocument("$toLower", "$status"), lowerCaseValue });
+        // The status names come from the Statuses enum (the one definition of a ticket status), not from
+        // string literals. Compared in lower case, so "Open", "open" and "OPEN" in the database all count the same.
+        static BsonDocument StatusIs(Statuses status) =>
+            new BsonDocument("$eq", new BsonArray { new BsonDocument("$toLower", "$status"), status.ToString().ToLowerInvariant() });
 
         var hasResolvedAt = new BsonDocument("$ne", new BsonArray
         {
@@ -36,20 +37,20 @@ public class TicketQueries : ITicketQueries
         //  1. Open always wins (a reopened ticket may still have an old resolvedAt).
         //  2. Resolved = status Resolved, or resolvedAt filled (a ticket that was solved and then closed).
         //  3. Closed without a resolvedAt = closed without resolve.
-        //  Default: everything else is not yet solved, so it counts as open.
+        //  Default: everything else (including In_Progress) is not yet solved, so it counts as open.
         var category = new BsonDocument("$switch", new BsonDocument
         {
             { "branches", new BsonArray
                 {
-                    new BsonDocument { { "case", StatusIs("open") }, { "then", "Open" } },
+                    new BsonDocument { { "case", StatusIs(Statuses.Open) }, { "then", TicketCategory.Open.ToString() } },
                     new BsonDocument
                     {
-                        { "case", new BsonDocument("$or", new BsonArray { StatusIs("resolved"), hasResolvedAt }) },
-                        { "then", "Resolved" }
+                        { "case", new BsonDocument("$or", new BsonArray { StatusIs(Statuses.Resolved), hasResolvedAt }) },
+                       { "then", TicketCategory.Resolved.ToString() }
                     },
-                    new BsonDocument { { "case", StatusIs("closed") }, { "then", "ClosedWithoutResolve" } }
+                    new BsonDocument { { "case", StatusIs(Statuses.Closed) }, { "then", TicketCategory.ClosedWithoutResolve.ToString() } }
                 } },
-            { "default", "Open" }
+            { "default", TicketCategory.Open.ToString() }
         });
 
         // Count per category.

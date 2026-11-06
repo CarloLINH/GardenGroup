@@ -3,9 +3,9 @@ namespace GardenGroup.Enums
 {
     public enum Priorities
     {
-        Low,
-        Medium,
-        High,
-        Urgent
+        Low = 0,
+        Medium = 1,
+        High = 2,
+        Urgent = 3
     }
 }
