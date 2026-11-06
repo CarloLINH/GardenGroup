@@ -1,31 +1,130 @@
+/* ===== GardenGroup theme: green plant ===== */
+:root {
+    --gg-green: #2e7d32; /* main plant green */
+    --gg-green-dark: #1b5e20; /* hover / active */
+    --gg-green-light: #e8f5e9; /* soft backgrounds */
+    --gg-leaf: #66bb6a; /* accents */
+    --gg-soil: #4e342e; /* optional brown accent */
+
+    --bs-primary: var(--gg-green);
+    --bs-primary-rgb: 46, 125, 50;
+    --bs-link-color: var(--gg-green);
+    --bs-link-color-rgb: 46, 125, 50;
+    --bs-link-hover-color: var(--gg-green-dark);
+    --bs-link-hover-color-rgb: 27, 94, 32;
+    --bs-body-bg: #f6faf6;
+    --bs-focus-ring-color: rgba(46, 125, 50, 0.25);
+}
+
 html {
-  font-size: 14px;
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+    html {
+        font-size: 16px;
+    }
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
 
+/* Buttons */
+.btn-primary {
+    --bs-btn-bg: var(--gg-green);
+    --bs-btn-border-color: var(--gg-green);
+    --bs-btn-hover-bg: var(--gg-green-dark);
+    --bs-btn-hover-border-color: var(--gg-green-dark);
+    --bs-btn-active-bg: var(--gg-green-dark);
+    --bs-btn-active-border-color: var(--gg-green-dark);
+    --bs-btn-disabled-bg: var(--gg-leaf);
+    --bs-btn-disabled-border-color: var(--gg-leaf);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--gg-green);
+    --bs-btn-border-color: var(--gg-green);
+    --bs-btn-hover-bg: var(--gg-green);
+    --bs-btn-hover-border-color: var(--gg-green);
+    --bs-btn-active-bg: var(--gg-green-dark);
+    --bs-btn-active-border-color: var(--gg-green-dark);
+}
+
+/* Focus ring (was blue) */
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus,
+.form-select:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--gg-leaf);
+    border-color: var(--gg-green);
+}
+
+.form-check-input:checked {
+    background-color: var(--gg-green);
+    border-color: var(--gg-green);
+}
+
+/* Navbar */
+.navbar {
+    border-bottom: 3px solid var(--gg-green) !important;
+}
+
+.navbar-brand {
+    color: var(--gg-green) !important;
+    font-weight: 700;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+    color: var(--gg-green-dark);
+}
+
+/* Tables */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-bg-type: var(--gg-green-light);
+}
+
+.table-hover > tbody > tr:hover > * {
+    --bs-table-bg-state: #c8e6c9;
+}
+
+.table > thead {
+    background-color: var(--gg-green-light);
+    color: var(--gg-green-dark);
+}
+
+/* Cards, pagination */
+.card {
+    border-color: #cfe5d0;
+}
+
+.page-link {
+    color: var(--gg-green);
+}
+
+.page-item.active .page-link {
+    background-color: var(--gg-green);
+    border-color: var(--gg-green);
+    color: #fff;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--gg-green-light);
+    border-top: 1px solid #cfe5d0 !important;
+}
+
+    .footer a {
+        color: var(--gg-green-dark);
+    }
+
+/* Floating form labels (unchanged) */
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+    color: var(--bs-secondary-color);
+    text-align: end;
 }
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+    text-align: start;
 }
