@@ -20,6 +20,13 @@ public sealed class EmployeeRepository : IEmployeeRepository
             .ToListAsync();
     }
 
+    public List<Employee> GetActive()
+    {
+        return _employees.Find(employee => employee.IsActive != false)
+            .SortBy(employee => employee.EmployeeId)
+            .ToList();
+    }
+
     public Task<Employee?> GetByIdAsync(string id)
     {
         try

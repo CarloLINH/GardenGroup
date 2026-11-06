@@ -1,12 +1,13 @@
-﻿using GardenGroup.Enums;
+// Author: Mart (Index), Emre (all other actions)
+using GardenGroup.Authorization;
+using GardenGroup.Enums;
 using GardenGroup.Extensions;
 using GardenGroup.Models;
 using GardenGroup.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using MongoDB.Bson;
-using System.Net.NetworkInformation;
 
 namespace GardenGroup.Controllers
 {
@@ -14,12 +15,18 @@ namespace GardenGroup.Controllers
     public class TicketController : Controller
     {
         private readonly ITicketService _ticketService;
+        private readonly IEmployeeService _employeeService;
+        private readonly ITicketEscalator _escalator;
         private const int PageSize = 100;
 
-        public TicketController(ITicketService ticketService)
+        public TicketController(ITicketService ticketService, IEmployeeService employeeService, ITicketEscalator escalator)
         {
             _ticketService = ticketService;
+            _employeeService = employeeService;
+            _escalator = escalator;
         }
+
+        // ---------------------------------------------------------------- list (Mart)
 
         public async Task<ActionResult> Index(Statuses? status, int? assignedTo, string? q, string sort = TicketSort.Newest, int page = 0)
         {
@@ -62,49 +69,115 @@ namespace GardenGroup.Controllers
             return View(tickets);
         }
 
+       
         public ActionResult Create()
         {
-            return View();
+            var me = User.GetEmployeeId();
+            if (me is null)
+            {
+                return Forbid();
+            }
+
+            LoadReporters();
+            return View(new Ticket { Title = "", ReportById = me.Value });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(Ticket ticket)
+        public ActionResult Create([Bind("Title,Description,Type,Priority,Deadline,ReportById")] Ticket ticket)
         {
-            if (ModelState.IsValid)
+            var me = User.GetEmployeeId();
+            if (me is null)
             {
-                _ticketService.CreateTicket(ticket);
-                return RedirectToAction(nameof(Index));
+                return Forbid();
             }
-            return View(ticket);
+
+            ModelState.Remove(nameof(Ticket.ReportById));
+
+            if (User.IsServiceDesk())
+            {
+                if (!_employeeService.GetActiveEmployees().Any(e => e.EmployeeId == ticket.ReportById))
+                {
+                    ModelState.AddModelError(nameof(Ticket.ReportById), "Choose an employee from the list.");
+                }
+            }
+            else
+            {
+                ticket.ReportById = me.Value;
+            }
+
+            if (ticket.Deadline is null)
+            {
+                ModelState.AddModelError(nameof(Ticket.Deadline), "Choose a deadline.");
+            }
+            else if (ticket.Deadline.Value.Date < DateTime.Today)
+            {
+                ModelState.AddModelError(nameof(Ticket.Deadline), "The deadline cannot be in the past.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                LoadReporters();
+                return View(ticket);
+            }
+
+            ticket.Deadline = ticket.Deadline!.Value.Date;
+            _ticketService.CreateTicket(ticket);
+
+            TempData["Success"] = $"Ticket #{ticket.TicketId} was created.";
+            return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Policy = "ServiceDesk")]
         public ActionResult Edit(string id)
         {
-            var ticket = _ticketService.GetTicketById(id);
+            var ticket = GetExistingTicket(id);
             if (ticket == null)
             {
                 return NotFound();
             }
+
+            LoadAssignees();
             return View(ticket);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(string id, Ticket ticket)
+        [Authorize(Policy = "ServiceDesk")]
+        public ActionResult Edit(string id, [Bind("Title,Description,Type,Priority,Deadline,Status,AssignedToId")] Ticket ticket)
         {
-            if (ModelState.IsValid)
+            var existing = GetExistingTicket(id);
+            if (existing == null)
             {
-                ticket.Id = id;
-                _ticketService.UpdateTicket(ticket);
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            return View(ticket);
+
+            if (ticket.AssignedToId is int assignee && !GetAssignees().Any(e => e.EmployeeId == assignee))
+            {
+                ModelState.AddModelError(nameof(Ticket.AssignedToId), "Choose a Service Desk employee from the list.");
+            }
+
+            ticket.Id = id;
+            ticket.TicketId = existing.TicketId;
+
+            if (!ModelState.IsValid)
+            {
+                LoadAssignees();
+                return View(ticket);
+            }
+
+            ticket.Deadline = ticket.Deadline?.Date;
+            _ticketService.UpdateTicket(ticket);
+
+            TempData["Success"] = $"Ticket #{existing.TicketId} was saved.";
+            return RedirectToAction(nameof(Details), new { id });
         }
 
+
+        [Authorize(Policy = "ServiceDesk")]
         public ActionResult Delete(string id)
         {
-            var ticket = _ticketService.GetTicketById(id);
+            var ticket = GetExistingTicket(id);
             if (ticket == null)
             {
                 return NotFound();
@@ -114,19 +187,24 @@ namespace GardenGroup.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "ServiceDesk")]
         public ActionResult DeleteConfirmed(string id)
         {
+            var ticket = GetExistingTicket(id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
             _ticketService.DeleteTicket(id);
+            TempData["Success"] = $"Ticket #{ticket.TicketId} was deleted.";
             return RedirectToAction(nameof(Index));
         }
 
+
         public ActionResult Details(string id)
         {
-            try
-            {
-                MongoDB.Bson.ObjectId.Parse(id);
-            }
-            catch (FormatException)
+            if (!ObjectId.TryParse(id, out _))
             {
                 return BadRequest("The ticket identifier is invalid.");
             }
@@ -138,7 +216,79 @@ namespace GardenGroup.Controllers
                 return NotFound();
             }
 
+            if (!User.IsServiceDesk() && ticket.ReportById != User.GetEmployeeId())
+            {
+                return Forbid();
+            }
+
             return View(ticket);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "ServiceDesk")]
+        public ActionResult Escalate(string id)
+        {
+            return ShowResult(_escalator.Escalate(id), id,
+                "The ticket was escalated to management.",
+                "This ticket cannot be escalated (it is already resolved, closed or escalated).");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "ServiceDesk")]
+        public ActionResult Close(string id)
+        {
+            return ShowResult(_escalator.Close(id), id,
+                "The ticket was closed.",
+                "This ticket is already closed.");
+        }
+
+        private ActionResult ShowResult(EscalationResult result, string id, string success, string notAllowed)
+        {
+            if (result == EscalationResult.NotFound)
+            {
+                return NotFound();
+            }
+
+            if (result == EscalationResult.Done)
+            {
+                TempData["Success"] = success;
+            }
+            else
+            {
+                TempData["Error"] = notAllowed;
+            }
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        private Ticket? GetExistingTicket(string id)
+        {
+            return ObjectId.TryParse(id, out _) ? _ticketService.GetTicketById(id) : null;
+        }
+
+        private List<Employee> GetAssignees()
+        {
+            return _employeeService.GetActiveEmployees().Where(e => AppRoles.IsServiceDesk(e.Role)).ToList();
+        }
+
+        private void LoadAssignees()
+        {
+            ViewBag.Assignees = GetAssignees()
+                .Select(e => new SelectListItem($"{e.FirstName} {e.LastName}", e.EmployeeId.ToString()))
+                .ToList();
+        }
+
+        private void LoadReporters()
+        {
+            if (!User.IsServiceDesk())
+            {
+                return;
+            }
+
+            ViewBag.Reporters = _employeeService.GetActiveEmployees()
+                .Select(e => new SelectListItem($"{e.FirstName} {e.LastName} (#{e.EmployeeId})", e.EmployeeId.ToString()))
+                .ToList();
         }
     }
 }

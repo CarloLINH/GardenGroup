@@ -128,3 +128,92 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* ===== Shared page building blocks (owner: Emre) =====
+   Use these on every page so the application looks the same. See Docs/Styleguide.md. */
+
+/* Page title with optional subtitle and action button on the right */
+.gg-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+    .gg-page-header h1,
+    .gg-page-header h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--gg-green-dark);
+    }
+
+    .gg-page-header p {
+        margin: 0;
+        color: var(--bs-secondary-color);
+    }
+
+/* White panel for forms, details and tables */
+.gg-card {
+    background: #fff;
+    border: 1px solid #cfe5d0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+}
+
+.gg-card-flush {
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Forms: one column, readable width, bold labels */
+.gg-form {
+    max-width: 720px;
+}
+
+    .gg-form .form-label {
+        font-weight: 600;
+    }
+
+/* Details page: label / value pairs */
+.gg-details dt {
+    color: var(--bs-secondary-color);
+    font-weight: 600;
+}
+
+.gg-details dd {
+    margin-bottom: 1rem;
+}
+
+.gg-pre {
+    white-space: pre-wrap;
+}
+
+/* Row of buttons (Edit, Escalate, Close, Delete) */
+.gg-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+    .gg-actions form {
+        margin: 0;
+    }
+
+/* Validation messages: same red everywhere */
+.input-validation-error {
+    border-color: #dc3545 !important;
+}
+
+.field-validation-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+}
+
+.validation-summary-errors ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
