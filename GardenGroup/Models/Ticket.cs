@@ -38,7 +38,6 @@ namespace GardenGroup.Models
         public Statuses Status { get; set; } = Statuses.Open;
 
         [BsonElement("priority")]
-        [BsonRepresentation(BsonType.String)] 
         public Priorities Priority { get; set; } = Priorities.Medium;
 
         [BsonElement("resolvedAt")]

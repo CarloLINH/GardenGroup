@@ -6,9 +6,6 @@ namespace GardenGroup.Services;
 
 public sealed class EmployeeService : IEmployeeService
 {
-    private static readonly IReadOnlyList<string> Roles =
-        new[] { "manager", "admin", "agent", "employee" };
-
     private readonly IEmployeeRepository _employeeRepository;
     private readonly IPasswordHasher<Employee> _passwordHasher;
 
@@ -20,7 +17,19 @@ public sealed class EmployeeService : IEmployeeService
         _passwordHasher = passwordHasher;
     }
 
-    public IReadOnlyList<string> AllowedRoles => Roles;
+    public async Task<Employee?> AuthenticateAsync(string email, string password)
+    {
+        var employee = await _employeeRepository.GetByEmailAsync(email.Trim().ToLowerInvariant());
+        if (employee is null || !employee.Active || string.IsNullOrWhiteSpace(employee.PasswordHash))
+        {
+            return null;
+        }
+
+        var result = _passwordHasher.VerifyHashedPassword(employee, employee.PasswordHash, password);
+        return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded
+            ? employee
+            : null;
+    }
 
     public Task<IReadOnlyList<Employee>> GetAllAsync()
     {
@@ -50,15 +59,9 @@ public sealed class EmployeeService : IEmployeeService
         return _employeeRepository.ExistsByEmailAsync(email, excludedId);
     }
 
-    public bool IsValidRole(string role)
-    {
-        return Roles.Contains(role, StringComparer.Ordinal);
-    }
 
     public async Task CreateAsync(Employee employee, string password)
     {
-        EnsureValidRole(employee.Role);
-
         if (await EmployeeIdExistsAsync(employee.EmployeeId))
         {
             throw new InvalidOperationException(
@@ -71,14 +74,13 @@ public sealed class EmployeeService : IEmployeeService
                 "An employee with this email address already exists.");
         }
 
-        employee.EmployeeId = await GetNextEmployeeIdAsync();
-        employee.Password = _passwordHasher.HashPassword(employee, password);
+        employee.Email = employee.Email.Trim().ToLowerInvariant();
+        employee.PasswordHash = _passwordHasher.HashPassword(employee, password);
         await _employeeRepository.InsertAsync(employee);
     }
 
     public async Task UpdateAsync(Employee employee, string? password)
     {
-        EnsureValidRole(employee.Role);
 
         if (string.IsNullOrWhiteSpace(employee.Id))
         {
@@ -100,6 +102,7 @@ public sealed class EmployeeService : IEmployeeService
                 "An employee with this employee ID already exists.");
         }
 
+        employee.Email = employee.Email.Trim().ToLowerInvariant();
         if (await EmailExistsAsync(employee.Email, employee.Id))
         {
             throw new InvalidOperationException(
@@ -108,7 +111,7 @@ public sealed class EmployeeService : IEmployeeService
 
         if (!string.IsNullOrWhiteSpace(password))
         {
-            employee.Password = _passwordHasher.HashPassword(employee, password);
+            employee.PasswordHash = _passwordHasher.HashPassword(employee, password);
             employee.PasswordResetTime = null;
             employee.PasswordResetLink = null;
         }
@@ -121,13 +124,6 @@ public sealed class EmployeeService : IEmployeeService
         return _employeeRepository.DeactivateAsync(id);
     }
 
-    private void EnsureValidRole(string role)
-    {
-        if (!IsValidRole(role))
-        {
-            throw new ArgumentException("The selected role is not valid.", nameof(role));
-        }
-    }
     private async Task<bool> ObjectIdExistsAsync(string id)
     {
         return await _employeeRepository.GetByIdAsync(id) is not null;

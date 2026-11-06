@@ -1,16 +1,20 @@
 ﻿using GardenGroup.Enums;
 using GardenGroup.Models;
+using GardenGroup.Repositories;
 using GardenGroup.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using MongoDB.Bson;
 
 namespace GardenGroup.Controllers
 {
+    [Authorize]
     public class TicketController : Controller
     {
         private readonly ITicketService _ticketService;
         private readonly ITicketTransferService _ticketTransferService;
         private readonly IEmployeeService _employeeService;
+        private const int PageSize = 100;
 
         public TicketController(ITicketService ticketService, ITicketTransferService ticketTransferService, IEmployeeService employeeService)
         {
@@ -19,12 +23,21 @@ namespace GardenGroup.Controllers
             _employeeService = employeeService;
         }
 
-        public ActionResult Index(Statuses? status, int? assignedTo, string sort = "newest")
+        public async Task<ActionResult> Index(Statuses? status, int? assignedTo, string sort = "newest", int page = 0)
         {
-            var tickets = _ticketService.GetTickets(status, assignedTo, sort != "oldest");
+            page = Math.Max(page, 0);
+
+            var tickets = await _ticketService.GetTicketsAsync(
+                status, assignedTo, sort, page, PageSize);
+
+            ViewBag.HasNext = sort is "priorityDesc" or "priorityAsc"
+                && tickets.Count == PageSize;
+
             ViewBag.Status = status;
             ViewBag.AssignedTo = assignedTo;
             ViewBag.Sort = sort;
+            ViewBag.Page = page;
+
             return View(tickets);
         }
 

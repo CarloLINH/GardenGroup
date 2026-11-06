@@ -28,8 +28,10 @@
         </div>
         <div class="col-md-3">
             <select name="sort" class="form-select">
-                <option value="newest" selected="@((string)ViewBag.Sort != "oldest")">Newest first</option>
+                <option value="newest" selected="@((string)ViewBag.Sort == "newest")">Newest first</option>
                 <option value="oldest" selected="@((string)ViewBag.Sort == "oldest")">Oldest first</option>
+                <option value="priorityDesc" selected="@((string)ViewBag.Sort == "priorityDesc")">Priority: high to low</option>
+                <option value="priorityAsc" selected="@((string)ViewBag.Sort == "priorityAsc")">Priority: low to high</option>
             </select>
         </div>
         <div class="col-md-3">
@@ -89,6 +91,27 @@
                         </tbody>
                     </table>
                 </div>
+                @if (((string)ViewBag.Sort).StartsWith("priority"))
+                {
+                    var page = (int)ViewBag.Page;
+                    <div class="d-flex justify-content-between p-3">
+                        @if (page > 0)
+                        {
+                            <a asp-action="Index" asp-route-status="@ViewBag.Status" asp-route-assignedTo="@ViewBag.AssignedTo"
+                               asp-route-sort="@ViewBag.Sort" asp-route-page="@(page - 1)" class="btn btn-sm btn-outline-secondary">Previous</a>
+                        }
+                        else
+                        {
+
+                            <span></span>
+                        }
+                        @if ((bool)ViewBag.HasNext)
+                        {
+                            <a asp-action="Index" asp-route-status="@ViewBag.Status" asp-route-assignedTo="@ViewBag.AssignedTo"
+                               asp-route-sort="@ViewBag.Sort" asp-route-page="@(page + 1)" class="btn btn-sm btn-outline-secondary">Next</a>
+                        }
+                    </div>
+                }
             }
         </div>
     </div>
