@@ -9,10 +9,14 @@ namespace GardenGroup.Services
     public class TicketService : ITicketService
     {
         private readonly ITicketRepository _ticketRepository;
+        private readonly ITicketPrioritySorter _prioritySorter;
 
-        public TicketService(ITicketRepository ticketRepository)
+        public TicketService(
+            ITicketRepository ticketRepository,
+            ITicketPrioritySorter prioritySorter)
         {
             _ticketRepository = ticketRepository;
+            _prioritySorter = prioritySorter;
         }
 
         public List<Ticket> GetAllTickets()
@@ -64,6 +68,24 @@ namespace GardenGroup.Services
         public void DeleteTicket(string id)
         {
             _ticketRepository.DeleteTicket(id);
+        }
+
+        public async Task<List<Ticket>> GetTicketsAsync(Statuses? status, int? assignedToId, string sort, int page, int pageSize)
+        {
+            page = Math.Max(page, 0);
+
+            if (sort is "priorityDesc" or "priorityAsc")
+            {
+                var order = sort == "priorityDesc"
+                    ? TicketSortOrder.PriorityHighToLow
+                    : TicketSortOrder.PriorityLowToHigh;
+
+                return await _prioritySorter.GetSortedAsync(
+                    order, assignedToId, status, page, pageSize);
+            }
+
+            return _ticketRepository.GetTickets(
+                status, assignedToId, sort != "oldest");
         }
     }
 }

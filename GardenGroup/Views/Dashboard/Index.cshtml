@@ -1,19 +1,97 @@
-﻿@model GardenGroup.ViewModels.DashboardViewModel
+﻿@using System.Globalization
+@using GardenGroup.Enums
+@model GardenGroup.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
 
-<h2>Tickets per status</h2>
-<table class="table">
-    <tr><th>Status</th><th>Count</th><th>%</th></tr>
-    @foreach (var s in Model.Statuses)
-    {
-        <tr><td>@s.Status</td><td>@s.Count</td><td>@s.Percentage.ToString("0.0") %</td></tr>
-    }
-</table>
+    // Cijfers in CSS moeten met een punt (12.5), ook als de pagina in het Nederlands draait (12,5).
+    string Css(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
 
-<h2>Workload</h2>
-<table class="table">
-    <tr><th>Employee</th><th>Tickets</th></tr>
-    @foreach (var w in Model.Workloads)
+    string Label(TicketCategory c) => c switch
     {
-        <tr><td>@w.Name</td><td>@w.TicketCount</td></tr>
+        TicketCategory.Open => "Open",
+        TicketCategory.Resolved => "Opgelost",
+        _ => "Gesloten zonder oplossing"
+    };
+
+    string Mod(TicketCategory c) => c switch
+    {
+        TicketCategory.Open => "is-open",
+        TicketCategory.Resolved => "is-resolved",
+        _ => "is-closed"
+    };
+
+    var total = Model.Total;
+    var summary = string.Join(", ", Model.Categories.Select(c => $"{Label(c.Category)}: {c.Percentage:0.#}%"));
+    var maxWork = Model.Workloads.Any() ? Model.Workloads.Max(w => w.TicketCount) : 1;
+}
+
+<link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+
+<div class="dash">
+    <header class="dash-head">
+        <h1>@(Model.IsPersonal ? "Jouw tickets in één oogopslag" : "Stand van alle tickets")</h1>
+        <p>@(total == 1 ? "1 ticket" : $"{total} tickets") in totaal</p>
+    </header>
+
+    @if (total == 0)
+    {
+        <div class="dash-empty">
+            <p class="dash-empty-title">
+                @(Model.IsPersonal ? "Je hebt nog geen tickets." : "Er zijn nog geen tickets.")
+            </p>
+            <p>
+                @(Model.IsPersonal
+                    ? "Zodra je een incident meldt, zie je hier hoe het ervoor staat."
+                    : "Zodra er tickets zijn aangemaakt, verschijnt hier de stand van zaken.")
+            </p>
+            <a class="btn btn-outline-secondary" asp-controller="Ticket" asp-action="Index">Naar tickets</a>
+        </div>
     }
-</table>
+    else
+    {
+        <div class="dist" role="img" aria-label="Verdeling van tickets. @summary">
+            @foreach (var c in Model.Categories.Where(c => c.Count > 0))
+            {
+                <div class="dist-seg @Mod(c.Category)"
+                     style="width:@Css(100.0 * c.Count / total)%"
+                     title="@Label(c.Category): @c.Count"></div>
+            }
+        </div>
+
+        <div class="stats">
+            @foreach (var c in Model.Categories)
+            {
+                <div class="stat @Mod(c.Category)">
+                    <div class="stat-value">@c.Percentage.ToString("0.#")%</div>
+                    <div class="stat-label">@Label(c.Category)</div>
+                    <div class="stat-count">@(c.Count == 1 ? "1 ticket" : $"{c.Count} tickets")</div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!Model.IsPersonal)
+    {
+        <section class="work">
+            <h2>Werkverdeling</h2>
+            @if (!Model.Workloads.Any())
+            {
+                <p class="text-muted">Er zijn nog geen tickets toegewezen.</p>
+            }
+            else
+            {
+                @foreach (var w in Model.Workloads)
+                {
+                    <div class="work-row">
+                        <div class="work-name">@w.Name</div>
+                        <div class="work-bar" aria-hidden="true">
+                            <span style="width:@Css(100.0 * w.TicketCount / maxWork)%"></span>
+                        </div>
+                        <div class="work-num">@w.TicketCount</div>
+                    </div>
+                }
+            }
+        </section>
+    }
+</div>
