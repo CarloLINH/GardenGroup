@@ -10,18 +10,16 @@ namespace GardenGroup.Services
     {
         private readonly ITicketRepository _ticketRepository;
         private readonly ITicketPrioritySorter _prioritySorter;
+        private readonly ITicketSearcher _searcher;
 
         public TicketService(
             ITicketRepository ticketRepository,
-            ITicketPrioritySorter prioritySorter)
+            ITicketPrioritySorter prioritySorter,
+            ITicketSearcher searcher)
         {
             _ticketRepository = ticketRepository;
             _prioritySorter = prioritySorter;
-        }
-
-        public List<Ticket> GetAllTickets()
-        {
-            return _ticketRepository.GetAllTickets();
+            _searcher = searcher;
         }
 
         public Ticket? GetTicketById(string id)
@@ -32,11 +30,6 @@ namespace GardenGroup.Services
         public TicketDetails? GetTicketWithEmployees(string id)
         {
             return _ticketRepository.GetTicketWithEmployees(id);
-        }
-
-        public List<Ticket> GetTickets(Statuses? status, int? assignedToId, bool newestFirst)
-        {
-            return _ticketRepository.GetTickets(status, assignedToId, newestFirst);
         }
 
         public void CreateTicket(Ticket ticket)
@@ -70,22 +63,28 @@ namespace GardenGroup.Services
             _ticketRepository.DeleteTicket(id);
         }
 
-        public async Task<List<Ticket>> GetTicketsAsync(Statuses? status, int? assignedToId, string sort, int page, int pageSize)
+        public async Task<List<Ticket>> GetTicketsAsync(TicketListQuery query)
         {
-            page = Math.Max(page, 0);
+            ArgumentNullException.ThrowIfNull(query);
 
-            if (sort is "priorityDesc" or "priorityAsc")
+            if (!string.IsNullOrWhiteSpace(query.Search))
             {
-                var order = sort == "priorityDesc"
-                    ? TicketSortOrder.PriorityHighToLow
+                return await _searcher.SearchAsync(query);
+
+            }
+
+            if (query.Sort is TicketSort.PriorityDesc or TicketSort.PriorityAsc)
+            {
+                var order = query.Sort == TicketSort.PriorityDesc
+                     ? TicketSortOrder.PriorityHighToLow
                     : TicketSortOrder.PriorityLowToHigh;
 
                 return await _prioritySorter.GetSortedAsync(
-                    order, assignedToId, status, page, pageSize);
+                 order, query.AssignedToId, query.ReportedById, query.Status, query.Page, query.PageSize);
             }
 
             return _ticketRepository.GetTickets(
-                status, assignedToId, sort != "oldest");
+            query.Status, query.AssignedToId, query.ReportedById, query.Sort != TicketSort.Oldest);
         }
     }
 }
