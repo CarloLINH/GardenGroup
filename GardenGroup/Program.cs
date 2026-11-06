@@ -5,6 +5,8 @@ using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using GardenGroup.Migrations;
     
 namespace GardenGroup
 {
@@ -16,6 +18,13 @@ namespace GardenGroup
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.AccessDeniedPath = "/Home/AccessDenied";
+                });
+            builder.Services.AddAuthorization();
             
 
             var connectionString = builder.Configuration.GetConnectionString("MongoDb");
@@ -41,12 +50,16 @@ namespace GardenGroup
             builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<IPasswordHasher<Employee>, PasswordHasher<Employee>>();
+            builder.Services.AddScoped<IForgotPasswordService, ForgotPasswordService>();
 
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
             {
                 MongoIndexInitializer.EnsureIndexes(scope.ServiceProvider.GetRequiredService<IMongoDatabase>());
+                EmployeePasswordMigration.Run(
+                    scope.ServiceProvider.GetRequiredService<IMongoDatabase>(),
+                    scope.ServiceProvider.GetRequiredService<IPasswordHasher<Employee>>());
             }
 
             // Configure the HTTP request pipeline.
@@ -61,6 +74,7 @@ namespace GardenGroup
             app.UseHttpsRedirection();
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapStaticAssets();

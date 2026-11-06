@@ -1,9 +1,11 @@
 using GardenGroup.Models;
 using GardenGroup.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GardenGroup.Controllers;
 
+[Authorize]
 public sealed class EmployeesController : Controller
 {
     private readonly IEmployeeService _employeeService;
@@ -41,18 +43,17 @@ public sealed class EmployeesController : Controller
         model.LastName = model.LastName.Trim();
         model.Email = model.Email.Trim();
         model.Role = model.Role.Trim();
-
-        if (!_employeeService.IsValidRole(model.Role))
-        {
-            ModelState.AddModelError(nameof(model.Role), "Please select a valid role.");
-        }
-
         if (string.IsNullOrWhiteSpace(model.Password))
         {
             ModelState.AddModelError(nameof(model.Password), "A password is required for a new employee.");
         }
 
-        if (await _employeeService.EmailExistsAsync(model.Email) && ModelState.IsValid)
+        if (await _employeeService.EmployeeIdExistsAsync(model.EmployeeId))
+        {
+            ModelState.AddModelError(nameof(model.EmployeeId), "This employee ID is already in use.");
+        }
+
+        if (await _employeeService.EmailExistsAsync(model.Email.ToLowerInvariant()))
         {
             ModelState.AddModelError(nameof(model.Email), "This email address is already in use.");
         }
@@ -66,7 +67,7 @@ public sealed class EmployeesController : Controller
         {
             FirstName = model.FirstName,
             LastName = model.LastName,
-            Email = model.Email,
+            Email = model.Email.ToLowerInvariant(),
             Role = model.Role,
             IsActive = true
         };
@@ -109,12 +110,6 @@ public sealed class EmployeesController : Controller
         model.LastName = model.LastName.Trim();
         model.Email = model.Email.Trim();
         model.Role = model.Role.Trim();
-
-        if (!_employeeService.IsValidRole(model.Role))
-        {
-            ModelState.AddModelError(nameof(model.Role), "Please select a valid role.");
-        }
-
         if (await _employeeService.EmailExistsAsync(model.Email, id) && ModelState.IsValid)
         {
             ModelState.AddModelError(nameof(model.Email), "This email address is already in use.");

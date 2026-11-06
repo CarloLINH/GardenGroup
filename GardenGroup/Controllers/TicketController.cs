@@ -3,10 +3,12 @@ using GardenGroup.Models;
 using GardenGroup.Repositories;
 using GardenGroup.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using MongoDB.Bson;
 
 namespace GardenGroup.Controllers
 {
+    [Authorize]
     public class TicketController : Controller
     {
         private readonly ITicketService _ticketService;

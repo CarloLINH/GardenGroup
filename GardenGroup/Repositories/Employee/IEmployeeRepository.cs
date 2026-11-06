@@ -6,6 +6,7 @@ public interface IEmployeeRepository
 {
     Task<IReadOnlyList<Employee>> GetAllAsync();
     Task<Employee?> GetByIdAsync(string id);
+    Task<Employee?> GetByEmailAsync(string email);
     Task<Employee?> GetWithHighestEmployeeIdAsync();
     Task<bool> ExistsByEmployeeIdAsync(int employeeId, string? excludedId = null);
     Task<bool> ExistsByEmailAsync(string email, string? excludedId = null);

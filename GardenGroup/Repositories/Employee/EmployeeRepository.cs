@@ -35,6 +35,11 @@ public sealed class EmployeeRepository : IEmployeeRepository
         return _employees.Find(employee => employee.Id == id).FirstOrDefaultAsync();
     }
 
+    public Task<Employee?> GetByEmailAsync(string email)
+    {
+        return _employees.Find(employee => employee.Email == email).FirstOrDefaultAsync();
+    }
+
     public Task<Employee?> GetWithHighestEmployeeIdAsync()
     {
         return _employees.Find(FilterDefinition<Employee>.Empty)

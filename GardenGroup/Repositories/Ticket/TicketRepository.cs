@@ -1,6 +1,5 @@
 ﻿using GardenGroup.Models;
 using GardenGroup.Enums;
-using GardenGroup.Models;
 using GardenGroup.ViewModels;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
