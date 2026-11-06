@@ -1,8 +1,6 @@
 using GardenGroup.Models;
 using GardenGroup.Repositories;
 using GardenGroup.Services;
-using MongoDB.Bson;
-using MongoDB.Bson.IO;
 using MongoDB.Driver;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -28,14 +26,12 @@ namespace GardenGroup
             
 
             var connectionString = builder.Configuration.GetConnectionString("MongoDb");
-            builder.Services.AddSingleton<IMongoCollection<Employee>>(serviceProvider =>
-            serviceProvider.GetRequiredService<IMongoDatabase>().GetCollection<Employee>("employees"));
             builder.Services.AddScoped<ITicketQueries, TicketQueries>();
 
-            if (connectionString == null)
+            if (string.IsNullOrWhiteSpace(connectionString))
             {
-                Console.WriteLine("You must set your 'MONGODB_URI' environment variable. To learn how to set it, see https://www.mongodb.com/docs/drivers/csharp/current/get-started/create-connection-string");
-                Environment.Exit(0);
+                Console.WriteLine("The connection string is missing. Set it with: dotnet user-secrets set \"ConnectionStrings:MongoDb\" \"<your-mongodb-connection-string>\"");
+                Environment.Exit(1);
             }
 
             var client = new MongoClient(connectionString);
@@ -45,6 +41,7 @@ namespace GardenGroup
             builder.Services.AddSingleton(client.GetDatabase("helpdesk"));
 
             builder.Services.AddScoped<ITicketPrioritySorter, TicketPrioritySorter>();
+            builder.Services.AddScoped<ITicketSearcher, TicketSearcher>();
             builder.Services.AddScoped<ITicketRepository, TicketRepository>();
             builder.Services.AddScoped<ITicketService, TicketService>();
             builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();

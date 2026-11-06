@@ -1,10 +1,12 @@
 ﻿using GardenGroup.Enums;
+using GardenGroup.Extensions;
 using GardenGroup.Models;
-using GardenGroup.Repositories;
 using GardenGroup.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using MongoDB.Bson;
+using System.Net.NetworkInformation;
 
 namespace GardenGroup.Controllers
 {
@@ -19,18 +21,41 @@ namespace GardenGroup.Controllers
             _ticketService = ticketService;
         }
 
-        public async Task<ActionResult> Index(Statuses? status, int? assignedTo, string sort = "newest", int page = 0)
+        public async Task<ActionResult> Index(Statuses? status, int? assignedTo, string? q, string sort = TicketSort.Newest, int page = 0)
         {
+            int? reportedBy = null;
+
+            if (!User.IsServiceDesk())
+            {
+                reportedBy = User.GetEmployeeId();
+                if (reportedBy == null)
+                {
+                    return Forbid();
+                }
+                assignedTo = null;
+            }
+
             page = Math.Max(page, 0);
+            q = string.IsNullOrWhiteSpace(q) ? null : q.Trim();
 
-            var tickets = await _ticketService.GetTicketsAsync(
-                status, assignedTo, sort, page, PageSize);
+            var tickets = await _ticketService.GetTicketsAsync(new TicketListQuery
+            {
+                Status = status,
+                AssignedToId = assignedTo,
+                ReportedById = reportedBy,
+                Search = q,
+                Sort = sort,
+                Page = page,
+                PageSize = PageSize
+            });
 
-            ViewBag.HasNext = sort is "priorityDesc" or "priorityAsc"
-                && tickets.Count == PageSize;
+            var paged = q is not null || sort is TicketSort.PriorityDesc or TicketSort.PriorityAsc;
 
+            ViewBag.Paged = paged;
+            ViewBag.HasNext = paged && tickets.Count == PageSize;
             ViewBag.Status = status;
             ViewBag.AssignedTo = assignedTo;
+            ViewBag.Search = q;
             ViewBag.Sort = sort;
             ViewBag.Page = page;
 
