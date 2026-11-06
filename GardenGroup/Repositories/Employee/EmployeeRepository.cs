@@ -90,4 +90,11 @@ public sealed class EmployeeRepository : IEmployeeRepository
 
         return await _employees.Find(filter).Limit(1).AnyAsync();
     }
+
+    public Task<Employee?> GetByEmployeeIdAsync(int employeeId)
+    {
+        return _employees
+            .Find(employee => employee.EmployeeId == employeeId)
+            .FirstOrDefaultAsync();
+    }
 }

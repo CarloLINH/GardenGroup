@@ -23,3 +23,16 @@
             : $"{Model.Assignee.FirstName} {Model.Assignee.LastName}")
     </dd>
 </dl>
+
+<a asp-action="Transfer"
+   asp-route-id="@Model.Id"
+   class="btn btn-primary">
+    Transfer ticket
+</a>
+
+@if (TempData["TransferMessage"] is string message)
+{
+    <div class="alert alert-info">
+        @message
+    </div>
+}
