@@ -13,5 +13,6 @@ namespace GardenGroup.Services
         void UpdateTicket(Ticket ticket);
         void DeleteTicket(string id);
         List<Ticket> GetTickets(Statuses? status, int? assignedToId, bool newestFirst);
+        Task<List<Ticket>> GetTicketsAsync(Statuses? status, int? assignedToId, string sort, int page, int pageSize);
     }
 }

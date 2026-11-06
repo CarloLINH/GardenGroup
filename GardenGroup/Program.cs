@@ -44,7 +44,7 @@ namespace GardenGroup
 
             builder.Services.AddSingleton(client.GetDatabase("helpdesk"));
 
-
+            builder.Services.AddScoped<ITicketPrioritySorter, TicketPrioritySorter>();
             builder.Services.AddScoped<ITicketRepository, TicketRepository>();
             builder.Services.AddScoped<ITicketService, TicketService>();
             builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
