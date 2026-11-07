@@ -17,15 +17,15 @@ namespace GardenGroup.Controllers
         private readonly ITicketService _ticketService;
         private readonly IEmployeeService _employeeService;
         private readonly ITicketEscalator _escalator;
-        ITicketTransferService ticketTransferService
+        private readonly ITicketTransferService _ticketTransferService;
         private const int PageSize = 100;
 
-        public TicketController(ITicketService ticketService, IEmployeeService employeeService, ITicketEscalator escalator)
+        public TicketController(ITicketService ticketService, IEmployeeService employeeService, ITicketEscalator escalator, ITicketTransferService ticketTransferService)
         {
             _ticketService = ticketService;
             _employeeService = employeeService;
             _escalator = escalator;
-            ITicketTransferService ticketTransferService
+            _ticketTransferService = ticketTransferService;
         }
 
         // ---------------------------------------------------------------- list (Mart)

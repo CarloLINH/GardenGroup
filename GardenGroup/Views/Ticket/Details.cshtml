@@ -33,6 +33,7 @@
                     <button type="submit" class="btn btn-secondary">Close</button>
                 </form>
             }
+            <a asp-action="Transfer" asp-route-id="@Model.Id" class="btn btn-primary"> Transfer ticket </a>
             <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
         }
     </div>
@@ -97,9 +98,3 @@
         <dd class="col-sm-9 gg-pre">@Model.Description</dd>
     </dl>
 </div>
-
-<a asp-action="Transfer"
-   asp-route-id="@Model.Id"
-   class="btn btn-primary">
-    Transfer ticket
-</a>
