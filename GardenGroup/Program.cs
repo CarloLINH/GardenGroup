@@ -5,6 +5,7 @@ using MongoDB.Driver;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using GardenGroup.Migrations;
+using GardenGroup.Extensions;
     
 namespace GardenGroup
 {
@@ -22,7 +23,10 @@ namespace GardenGroup
                     options.LoginPath = "/Account/Login";
                     options.AccessDeniedPath = "/Home/AccessDenied";
                 });
-            builder.Services.AddAuthorization();
+
+            builder.Services.AddAuthorization(options =>
+                options.AddPolicy("ServiceDesk", policy =>
+                    policy.RequireAssertion(context => context.User.IsServiceDesk())));
             
 
             var connectionString = builder.Configuration.GetConnectionString("MongoDb");
@@ -44,6 +48,7 @@ namespace GardenGroup
             builder.Services.AddScoped<ITicketSearcher, TicketSearcher>();
             builder.Services.AddScoped<ITicketRepository, TicketRepository>();
             builder.Services.AddScoped<ITicketService, TicketService>();
+            builder.Services.AddScoped<ITicketEscalator, TicketEscalator>();
             builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<IPasswordHasher<Employee>, PasswordHasher<Employee>>();

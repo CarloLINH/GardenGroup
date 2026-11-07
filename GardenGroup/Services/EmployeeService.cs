@@ -36,6 +36,11 @@ public sealed class EmployeeService : IEmployeeService
         return _employeeRepository.GetAllAsync();
     }
 
+    public List<Employee> GetActiveEmployees()
+    {
+        return _employeeRepository.GetActive();
+    }
+
     public Task<Employee?> GetByIdAsync(string? id)
     {
         return string.IsNullOrWhiteSpace(id)

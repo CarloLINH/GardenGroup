@@ -38,7 +38,7 @@
                 <option value="">All statuses</option>
                 @foreach (var s in Enum.GetValues<Statuses>())
                 {
-                    <option value="@s" selected="@((Statuses?)ViewBag.Status == s)">@s</option>
+                    <option value="@s" selected="@((Statuses?)ViewBag.Status == s)">@s.ToLabel()</option>
                 }
             </select>
         </div>
@@ -103,7 +103,7 @@
                                     <td class="fw-medium text-dark">@item.Title</td>
                                     <td>
                                         <span class="badge rounded-pill px-3 py-2 @item.Status.GetBadgeColor()">
-                                            @item.Status
+                                            @item.Status.ToLabel()
                                         </span>
                                     </td>
                                     <td>

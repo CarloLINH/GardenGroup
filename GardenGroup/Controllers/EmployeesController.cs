@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace GardenGroup.Controllers;
 
-[Authorize]
+[Authorize(Policy = "ServiceDesk")]
 public sealed class EmployeesController : Controller
 {
     private readonly IEmployeeService _employeeService;
@@ -65,6 +65,7 @@ public sealed class EmployeesController : Controller
 
         var employee = new Employee
         {
+            EmployeeId = model.EmployeeId,
             FirstName = model.FirstName,
             LastName = model.LastName,
             Email = model.Email.ToLowerInvariant(),

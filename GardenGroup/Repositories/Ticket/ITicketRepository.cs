@@ -14,6 +14,9 @@ namespace GardenGroup.Repositories
 
         void UpdateTicket(Ticket ticket);
 
+        // Author: Emre. Changes the status only if the ticket still has expectedCurrent. False = nothing changed.
+        bool UpdateStatus(string id, Statuses expectedCurrent, Statuses newStatus);
+
         void DeleteTicket(string id);
 
         int GetLastTicketId();
