@@ -121,6 +121,7 @@ namespace GardenGroup.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "ServiceDesk")]
         public async Task<IActionResult> Transfer(string id)
         {
             if (!ObjectId.TryParse(id, out _))
@@ -147,6 +148,7 @@ namespace GardenGroup.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "ServiceDesk")]
         public async Task<IActionResult> Transfer(
             string id,
             int employeeId)
