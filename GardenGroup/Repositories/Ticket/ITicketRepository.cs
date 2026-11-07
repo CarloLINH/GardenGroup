@@ -7,7 +7,6 @@ namespace GardenGroup.Repositories
 {
     public interface ITicketRepository
     {
-        List<Ticket> GetAllTickets();
 
         Ticket? GetTicketById(string id);
         TicketDetails? GetTicketWithEmployees(string id);
@@ -16,15 +15,14 @@ namespace GardenGroup.Repositories
 
         void UpdateTicket(Ticket ticket);
 
+        // Author: Emre. Changes the status only if the ticket still has expectedCurrent. False = nothing changed.
+        bool UpdateStatus(string id, Statuses expectedCurrent, Statuses newStatus);
+
         void DeleteTicket(string id);
 
-        List<Ticket> GetTicketsByStatus(Statuses status);
-        List<Ticket> GetTicketsByAssignedEmployee(int employeeId);
-        List<Ticket> GetTicketsSortedByCreationDate(bool newestFirst);
-
-        List<Ticket> GetTickets(Statuses? status, int? assignedToId, bool newestFirst = true);
         int GetLastTicketId();
         UpdateResult TransferTicket(string ticketId, int employeeId);
 
+        List<Ticket> GetTickets(Statuses? status, int? assignedToId, int? reportedById, bool newestFirst = true);
     }
 }

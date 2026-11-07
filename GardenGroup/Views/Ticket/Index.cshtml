@@ -1,12 +1,23 @@
 ﻿@model IEnumerable<GardenGroup.Models.Ticket>
 @using GardenGroup.Extensions
 @using GardenGroup.Enums
+@{
+    // Author: Mart
+    // One list for both roles. The controller already limits a regular employee to their own tickets;
+    // the view only hides what that role cannot use (assignee filter, Edit, Delete).
+    var isServiceDesk = User.IsServiceDesk();
+    var isSearching = !string.IsNullOrWhiteSpace((string?)ViewBag.Search);
+    var sort = (string)ViewBag.Sort;
+    ViewData["Title"] = isServiceDesk ? "All tickets" : "My tickets";
+}
 
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="m-0 fw-bold text-dark">Ticket Dashboard</h2>
-            <p class="text-muted mb-0">Manage and track your support requests</p>
+            <h2 class="m-0 fw-bold text-dark">@(isServiceDesk ? "All tickets" : "My tickets")</h2>
+            <p class="text-muted mb-0">
+                @(isServiceDesk ? "Manage and track all support requests" : "Follow the progress of the incidents you reported")
+            </p>
         </div>
         <a asp-action="Create" class="btn btn-primary shadow-sm">
             + Create New Ticket
@@ -14,24 +25,35 @@
     </div>
 
     <form method="get" class="row g-2 mb-3">
+        <div class="col-md-12">
+            <input type="search" name="q" class="form-control" maxlength="100"
+                   placeholder="Search in title and description, e.g. printer AND offline OR wifi"
+                   value="@ViewBag.Search" />
+            <div class="form-text">
+                Words are combined with AND. Write OR (capitals) for an alternative. Search results are shown newest first.
+            </div>
+        </div>
         <div class="col-md-3">
             <select name="status" class="form-select">
                 <option value="">All statuses</option>
                 @foreach (var s in Enum.GetValues<Statuses>())
                 {
-                    <option value="@s" selected="@((Statuses?)ViewBag.Status == s)">@s</option>
+                    <option value="@s" selected="@((Statuses?)ViewBag.Status == s)">@s.ToLabel()</option>
                 }
             </select>
         </div>
-        <div class="col-md-3">
-            <input type="number" name="assignedTo" class="form-control" placeholder="Assigned to (employee id)" value="@ViewBag.AssignedTo" />
-        </div>
+        @if (isServiceDesk)
+        {
+            <div class="col-md-3">
+                <input type="number" name="assignedTo" class="form-control" placeholder="Assigned to (employee id)" value="@ViewBag.AssignedTo" />
+            </div>
+        }
         <div class="col-md-3">
             <select name="sort" class="form-select">
-                <option value="newest" selected="@((string)ViewBag.Sort == "newest")">Newest first</option>
-                <option value="oldest" selected="@((string)ViewBag.Sort == "oldest")">Oldest first</option>
-                <option value="priorityDesc" selected="@((string)ViewBag.Sort == "priorityDesc")">Priority: high to low</option>
-                <option value="priorityAsc" selected="@((string)ViewBag.Sort == "priorityAsc")">Priority: low to high</option>
+                <option value="@TicketSort.Newest" selected="@(sort == TicketSort.Newest)">Newest first</option>
+                <option value="@TicketSort.Oldest" selected="@(sort == TicketSort.Oldest)">Oldest first</option>
+                <option value="@TicketSort.PriorityDesc" selected="@(sort == TicketSort.PriorityDesc)">Priority: high to low</option>
+                <option value="@TicketSort.PriorityAsc" selected="@(sort == TicketSort.PriorityAsc)">Priority: low to high</option>
             </select>
         </div>
         <div class="col-md-3">
@@ -45,8 +67,18 @@
             @if (!Model.Any())
             {
                 <div class="text-center py-5">
-                    <h5 class="text-muted fw-normal">No tickets found.</h5>
-                    <p class="text-muted mb-0">Click the button above to create your first ticket.</p>
+                    @if (isSearching)
+                    {
+                        <h5 class="text-muted fw-normal">No tickets match your search.</h5>
+                        <p class="text-muted mb-0">Try other words, or use OR to widen the search.</p>
+                    }
+                    else
+                    {
+                        <h5 class="text-muted fw-normal">No tickets found.</h5>
+                        <p class="text-muted mb-0">
+                            @(isServiceDesk ? "Change the filters or create a ticket." : "You have not reported a ticket yet. Click the button above to create one.")
+                        </p>
+                    }
                 </div>
             }
             else
@@ -66,13 +98,12 @@
                         <tbody class="border-top-0">
                             @foreach (var item in Model)
                             {
-                                
                                 <tr>
                                     <td class="ps-4 text-muted fw-bold">#@item.TicketId</td>
                                     <td class="fw-medium text-dark">@item.Title</td>
                                     <td>
                                         <span class="badge rounded-pill px-3 py-2 @item.Status.GetBadgeColor()">
-                                            @item.Status
+                                            @item.Status.ToLabel()
                                         </span>
                                     </td>
                                     <td>
@@ -83,35 +114,38 @@
                                     <td class="text-muted">@item.CreatedAt.ToString("MMM dd, yyyy")</td>
                                     <td class="pe-4 text-end">
                                         <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary px-3">Details</a>
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-2 px-3">Edit</a>
-                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger px-3">Delete</a>
+                                        @if (isServiceDesk)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary ms-2 px-3">Edit</a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger ms-2 px-3">Delete</a>
+                                        }
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
-                @if (((string)ViewBag.Sort).StartsWith("priority"))
-                {
-                    var page = (int)ViewBag.Page;
-                    <div class="d-flex justify-content-between p-3">
-                        @if (page > 0)
-                        {
-                            <a asp-action="Index" asp-route-status="@ViewBag.Status" asp-route-assignedTo="@ViewBag.AssignedTo"
-                               asp-route-sort="@ViewBag.Sort" asp-route-page="@(page - 1)" class="btn btn-sm btn-outline-secondary">Previous</a>
-                        }
-                        else
-                        {
+            }
 
-                            <span></span>
-                        }
-                        @if ((bool)ViewBag.HasNext)
-                        {
-                            <a asp-action="Index" asp-route-status="@ViewBag.Status" asp-route-assignedTo="@ViewBag.AssignedTo"
-                               asp-route-sort="@ViewBag.Sort" asp-route-page="@(page + 1)" class="btn btn-sm btn-outline-secondary">Next</a>
-                        }
-                    </div>
-                }
+            @if ((bool)ViewBag.Paged)
+            {
+                var page = (int)ViewBag.Page;
+                <div class="d-flex justify-content-between p-3">
+                    @if (page > 0)
+                    {
+                        <a asp-action="Index" asp-route-q="@ViewBag.Search" asp-route-status="@ViewBag.Status" asp-route-assignedTo="@ViewBag.AssignedTo"
+                           asp-route-sort="@ViewBag.Sort" asp-route-page="@(page - 1)" class="btn btn-sm btn-outline-secondary">Previous</a>
+                    }
+                    else
+                    {
+                        <span></span>
+                    }
+                    @if ((bool)ViewBag.HasNext)
+                    {
+                        <a asp-action="Index" asp-route-q="@ViewBag.Search" asp-route-status="@ViewBag.Status" asp-route-assignedTo="@ViewBag.AssignedTo"
+                           asp-route-sort="@ViewBag.Sort" asp-route-page="@(page + 1)" class="btn btn-sm btn-outline-secondary">Next</a>
+                    }
+                </div>
             }
         </div>
     </div>

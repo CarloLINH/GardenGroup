@@ -6,13 +6,11 @@ namespace GardenGroup.Services
 {
     public interface ITicketService
     {
-        List<Ticket> GetAllTickets();
         Ticket? GetTicketById(string id);
         TicketDetails? GetTicketWithEmployees(string id);
         void CreateTicket(Ticket ticket);
         void UpdateTicket(Ticket ticket);
         void DeleteTicket(string id);
-        List<Ticket> GetTickets(Statuses? status, int? assignedToId, bool newestFirst);
-        Task<List<Ticket>> GetTicketsAsync(Statuses? status, int? assignedToId, string sort, int page, int pageSize);
+        Task<List<Ticket>> GetTicketsAsync(TicketListQuery query);
     }
 }

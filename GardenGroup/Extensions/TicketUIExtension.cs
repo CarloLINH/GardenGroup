@@ -10,8 +10,14 @@ namespace GardenGroup.Extensions
             {
                 Statuses.Open => "bg-success",
                 Statuses.Closed => "bg-secondary",
+                Statuses.Escalated => "bg-danger",
                 _ => "bg-warning text-dark"
             };
+        }
+
+        public static string ToLabel(this Statuses status)
+        {
+            return status == Statuses.In_Progress ? "In progress" : status.ToString();
         }
 
         public static string GetPriorityClass(this Priorities priority)

@@ -1,8 +1,36 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@using GardenGroup.Extensions
+@{
+    ViewData["Title"] = "Home";
+    var isServiceDesk = User.IsServiceDesk();
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="gg-page-header">
+    <div>
+        <h1>Welcome, @User.Identity?.Name</h1>
+        <p>GardenGroup Incident Management</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="gg-card h-100">
+            <h5>@(isServiceDesk ? "All tickets" : "My tickets")</h5>
+            <p class="text-muted">@(isServiceDesk ? "Follow up and manage every incident." : "Follow the progress of the incidents you reported.")</p>
+            <a asp-controller="Ticket" asp-action="Index" class="btn btn-outline-primary">Open list</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="gg-card h-100">
+            <h5>Report an incident</h5>
+            <p class="text-muted">Something is not working? Create a ticket.</p>
+            <a asp-controller="Ticket" asp-action="Create" class="btn btn-primary">New ticket</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="gg-card h-100">
+            <h5>Dashboard</h5>
+            <p class="text-muted">See the status of the tickets at a glance.</p>
+            <a asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-primary">Open dashboard</a>
+        </div>
+    </div>
 </div>
