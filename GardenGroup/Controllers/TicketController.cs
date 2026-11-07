@@ -17,13 +17,15 @@ namespace GardenGroup.Controllers
         private readonly ITicketService _ticketService;
         private readonly IEmployeeService _employeeService;
         private readonly ITicketEscalator _escalator;
+        private readonly ITicketTransferService _ticketTransferService;
         private const int PageSize = 100;
 
-        public TicketController(ITicketService ticketService, IEmployeeService employeeService, ITicketEscalator escalator)
+        public TicketController(ITicketService ticketService, IEmployeeService employeeService, ITicketEscalator escalator, ITicketTransferService ticketTransferService)
         {
             _ticketService = ticketService;
             _employeeService = employeeService;
             _escalator = escalator;
+            _ticketTransferService = ticketTransferService;
         }
 
         // ---------------------------------------------------------------- list (Mart)
@@ -222,6 +224,86 @@ namespace GardenGroup.Controllers
             }
 
             return View(ticket);
+        }
+
+        [HttpGet]
+        [Authorize(Policy = "ServiceDesk")]
+        public async Task<IActionResult> Transfer(string id)
+        {
+            if (!ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("The ticket identifier is invalid.");
+            }
+
+            var ticket = _ticketService.GetTicketById(id);
+
+            if (ticket is null)
+            {
+                return NotFound("The ticket could not be found.");
+            }
+
+            var employees = await _employeeService.GetAllAsync();
+
+            ViewBag.Employees = employees
+                .Where(employee => employee.Active)
+                .OrderBy(employee => employee.LastName)
+                .ToList();
+
+            return View(ticket);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "ServiceDesk")]
+        public async Task<IActionResult> Transfer(
+            string id,
+            int employeeId)
+        {
+            if (!ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("The ticket identifier is invalid.");
+            }
+
+            try
+            {
+                var result = await _ticketTransferService.TransferAsync(
+                    id,
+                    employeeId);
+
+                if (result.MatchedCount == 0)
+                {
+                    TempData["TransferMessage"] =
+                        "The ticket was already assigned to this employee.";
+                }
+                else if (result.ModifiedCount == 1)
+                {
+                    TempData["TransferMessage"] =
+                        "The ticket was successfully transferred.";
+                }
+
+                return RedirectToAction(nameof(Details), new { id });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("The ticket could not be found.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("employeeId", ex.Message);
+
+                var employees = await _employeeService.GetAllAsync();
+
+                ViewBag.Employees = employees
+                    .Where(employee => employee.Active)
+                    .OrderBy(employee => employee.LastName)
+                    .ToList();
+
+                var ticket = _ticketService.GetTicketById(id);
+
+                return View(ticket);
+            }
+
+
         }
 
         [HttpPost]

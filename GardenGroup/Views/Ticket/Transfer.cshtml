@@ -1,0 +1,54 @@
+﻿@model GardenGroup.Models.Ticket
+
+@{
+    var employees =
+        ViewBag.Employees as IReadOnlyList<GardenGroup.Models.Employee>
+        ?? Array.Empty<GardenGroup.Models.Employee>();
+}
+
+<h1>Transfer ticket</h1>
+
+<p>
+    Ticket: <strong>@Model.TicketId</strong>
+</p>
+
+<p>
+    @Model.Title
+</p>
+
+<form asp-action="Transfer" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div class="mb-3">
+        <label for="employeeId" class="form-label">
+            Assign to employee
+        </label>
+
+        <select id="employeeId" name="employeeId" class="form-select">
+            <option value="">-- Select an employee --</option>
+
+            @foreach (var employee in employees)
+            {
+                <option value="@employee.EmployeeId">
+                    @employee.FirstName @employee.LastName
+                </option>
+            }
+        </select>
+
+        <span class="text-danger">
+            @Html.ValidationMessage("employeeId")
+        </span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Transfer ticket
+    </button>
+
+    <a asp-action="Details"
+       asp-route-id="@Model.Id"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+</form>

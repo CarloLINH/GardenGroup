@@ -14,4 +14,5 @@ public interface IEmployeeRepository
     Task InsertAsync(Employee employee);
     Task ReplaceAsync(Employee employee);
     Task DeactivateAsync(string id);
+    Task<Employee?> GetByEmployeeIdAsync(int employeeId);
 }

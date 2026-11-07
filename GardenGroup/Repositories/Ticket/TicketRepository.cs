@@ -11,10 +11,12 @@ namespace GardenGroup.Repositories
     {
 
         private readonly IMongoCollection<Ticket> _tickets;
+        private readonly IMongoCollection<Employee> _employees;
 
         public TicketRepository(IMongoDatabase database)
         {
             _tickets = database.GetCollection<Ticket>("tickets");
+            _employees = database.GetCollection<Employee>("employees");
         }
 
         public void CreateTicket(Ticket ticket)
@@ -204,5 +206,34 @@ namespace GardenGroup.Repositories
                 .Limit(1)
                 .Project(t => t.TicketId)
                 .FirstOrDefault();
+
+        public UpdateResult TransferTicket(string ticketId, int employeeId)
+        {
+            if (!ObjectId.TryParse(ticketId, out _))
+            {
+                throw new ArgumentException(
+                    "The ticket identifier is invalid.",
+                    nameof(ticketId));
+            }
+
+            if (employeeId <= 0)
+            {
+                throw new ArgumentException(
+                    "The employee identifier is invalid.",
+                    nameof(employeeId));
+            }
+
+            var filter = Builders<Ticket>.Filter.And(
+                Builders<Ticket>.Filter.Eq(ticket => ticket.Id, ticketId),
+                Builders<Ticket>.Filter.Ne(
+                    ticket => ticket.AssignedToId,
+                    employeeId));
+
+            var update = Builders<Ticket>.Update
+                .Set(ticket => ticket.AssignedToId, employeeId)
+                .Set(ticket => ticket.UpdatedAt, DateTime.UtcNow);
+
+            return _tickets.UpdateOne(filter, update);
+        }
     }
 }

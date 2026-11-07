@@ -1,6 +1,7 @@
 ﻿using GardenGroup.Enums;
 using GardenGroup.Models;
 using GardenGroup.ViewModels;
+using MongoDB.Driver;
 
 namespace GardenGroup.Repositories
 {
@@ -20,6 +21,7 @@ namespace GardenGroup.Repositories
         void DeleteTicket(string id);
 
         int GetLastTicketId();
+        UpdateResult TransferTicket(string ticketId, int employeeId);
 
         List<Ticket> GetTickets(Statuses? status, int? assignedToId, int? reportedById, bool newestFirst = true);
     }

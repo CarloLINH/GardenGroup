@@ -53,6 +53,7 @@ namespace GardenGroup
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<IPasswordHasher<Employee>, PasswordHasher<Employee>>();
             builder.Services.AddScoped<IForgotPasswordService, ForgotPasswordService>();
+            builder.Services.AddScoped<ITicketTransferService, TicketTransferService>();
 
             var app = builder.Build();
 
