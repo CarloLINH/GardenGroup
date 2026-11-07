@@ -1,26 +1,31 @@
-﻿using GardenGroup.Repositories;
+﻿// Author: Carlo (dashboard), Emre (login and role check)
+using GardenGroup.Extensions;
+using GardenGroup.Repositories;
 using GardenGroup.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GardenGroup.Controllers;
 
+[Authorize]
 public class DashboardController : Controller
 {
     private readonly ITicketQueries _queries;
 
     public DashboardController(ITicketQueries queries) => _queries = queries;
 
-    /// <summary>
-    /// Toont het dashboard. Met userId: alleen de tickets van die medewerker (regular employee).
-    /// Zonder userId: alle tickets plus de werkverdeling (service desk).
-    /// </summary>
-    /// <param name="userId">TIJDELIJK: vervang door de ingelogde gebruiker zodra login klaar is.</param>
-    public async Task<IActionResult> Index(int? userId)
+    public async Task<IActionResult> Index()
     {
-        // TODO (na login): niet uit de querystring halen, anders kan iedereen andermans dashboard openen.
-        //   Regular employee  -> userId = id van de ingelogde gebruiker (uit de claims)
-        //   Service desk      -> userId = null
-        //   Plus [Authorize] op deze controller.
+        int? userId = null;
+        if (!User.IsServiceDesk())
+        {
+            userId = User.GetEmployeeId();
+            if (userId is null)
+            {
+                return Forbid();
+            }
+        }
+
         var vm = new DashboardViewModel
         {
             IsPersonal = userId.HasValue,

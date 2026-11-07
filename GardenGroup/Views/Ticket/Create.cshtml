@@ -1,37 +1,82 @@
-﻿@model GardenGroup.Models.Ticket
+@using GardenGroup.Enums
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using GardenGroup.Extensions
+@model GardenGroup.Models.Ticket
+@{
+    var isServiceDesk = User.IsServiceDesk();
+    ViewData["Title"] = "Create ticket";
+}
 
-<h2>Create New Ticket</h2>
-<hr />
-
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" method="post">
-
-            <div class="form-group mb-3">
-                <label asp-for="Title" class="control-label fw-bold"></label>
-                <input asp-for="Title" class="form-control" placeholder="Enter ticket title..." />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="Description" class="control-label fw-bold"></label>
-                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="ReportById" class="control-label fw-bold">Reported By (User ID)</label>
-                <input asp-for="ReportById" type="number" min="1" "class="form-control" />
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="Priority" class="control-label fw-bold"></label>
-                <select asp-for="Priority" asp-items="Html.GetEnumSelectList<GardenGroup.Enums.Priorities>()" class="form-select"></select>
-            </div>
-
-            <div class="form-group mt-4">
-                <input type="submit" value="Create Ticket" class="btn btn-success" />
-                <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
-            </div>
-        </form>
+<div class="gg-page-header">
+    <div>
+        <h1>Create ticket</h1>
+        <p>
+            @(isServiceDesk
+                ? "Report an incident for yourself or on behalf of an employee."
+                : "Describe your problem. The Service Desk will pick it up.")
+        </p>
     </div>
 </div>
+
+<div class="gg-card gg-form">
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        @if (isServiceDesk)
+        {
+            <div class="mb-3">
+                <label asp-for="ReportById" class="form-label">Reported by</label>
+                <select asp-for="ReportById" asp-items="(List<SelectListItem>)ViewBag.Reporters" class="form-select"></select>
+                <span asp-validation-for="ReportById"></span>
+            </div>
+        }
+        else
+        {
+            <div class="mb-3">
+                <label class="form-label">Reported by</label>
+                <input class="form-control" value="@User.Identity?.Name" disabled />
+            </div>
+        }
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label">Subject</label>
+            <input asp-for="Title" class="form-control" maxlength="100" placeholder="Short summary of the problem" />
+            <span asp-validation-for="Title"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="5" maxlength="2000"
+                      placeholder="What happened? What did you expect?"></textarea>
+            <span asp-validation-for="Description"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Type" class="form-label"></label>
+                <select asp-for="Type" asp-items="Html.GetEnumSelectList<TicketTypes>()" class="form-select"></select>
+                <span asp-validation-for="Type"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Priority" class="form-label"></label>
+                <select asp-for="Priority" asp-items="Html.GetEnumSelectList<Priorities>()" class="form-select"></select>
+                <span asp-validation-for="Priority"></span>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="Deadline" class="form-label"></label>
+            <input asp-for="Deadline" type="date" class="form-control" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            <span asp-validation-for="Deadline"></span>
+        </div>
+
+        <div class="gg-actions">
+            <button type="submit" class="btn btn-primary">Create ticket</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

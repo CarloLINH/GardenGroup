@@ -114,8 +114,11 @@ namespace GardenGroup.Repositories
                 UpdatedAt = ticket.UpdatedAt,
                 Status = ticket.Status,
                 Priority = ticket.Priority,
+                Type = ticket.Type,
+                Deadline = ticket.Deadline,
                 ResolvedAt = ticket.ResolvedAt,
                 ClosedAt = ticket.ClosedAt,
+                EscalatedAt = ticket.EscalatedAt,
                 Reporter = GetFirstEmployee(document, "reporters"),
                 Assignee = GetFirstEmployee(document, "assignees")
             };
@@ -152,22 +155,40 @@ namespace GardenGroup.Repositories
                 .Set(t => t.Description, ticket.Description)
                 .Set(t => t.AssignedToId, ticket.AssignedToId)
                 .Set(t => t.Priority, ticket.Priority)
+                .Set(t => t.Type, ticket.Type)
+                .Set(t => t.Deadline, ticket.Deadline)
                 .Set(t => t.Status, ticket.Status)
                 .Set(t => t.UpdatedAt, DateTime.Now);
 
-            if (ticket.Status == Statuses.Resolved && ticket.ResolvedAt == null)
+            var current = _tickets.Find(t => t.Id == ticket.Id).FirstOrDefault();
+            if (current is not null && current.Status != ticket.Status)
             {
-                update = update.Set(t => t.ResolvedAt, DateTime.Now);
-            }
-            if (ticket.Status == Statuses.Closed && ticket.ClosedAt == null)
-            {
-                update = update.Set(t => t.ClosedAt, DateTime.Now);
+                if (ticket.Status == Statuses.Resolved) update = update.Set(t => t.ResolvedAt, DateTime.Now);
+                if (ticket.Status == Statuses.Closed) update = update.Set(t => t.ClosedAt, DateTime.Now);
+                if (ticket.Status == Statuses.Escalated) update = update.Set(t => t.EscalatedAt, DateTime.Now);
             }
 
             _tickets.UpdateOne(filter, update);
         }
 
-        //Indexes for performance optimization
+        public bool UpdateStatus(string id, Statuses expectedCurrent, Statuses newStatus)
+        {
+            if (!ObjectId.TryParse(id, out _))
+            {
+                return false;
+            }
+
+            var update = Builders<Ticket>.Update
+                .Set(t => t.Status, newStatus)
+                .Set(t => t.UpdatedAt, DateTime.Now);
+
+            if (newStatus == Statuses.Closed) update = update.Set(t => t.ClosedAt, DateTime.Now);
+            if (newStatus == Statuses.Escalated) update = update.Set(t => t.EscalatedAt, DateTime.Now);
+
+            var result = _tickets.UpdateOne(t => t.Id == id && t.Status == expectedCurrent, update);
+            return result.ModifiedCount == 1;
+        }
+
         public List<Ticket> GetTickets(Statuses? status, int? assignedToId, int? reportedById, bool newestFirst = true)
         {
             var filter = TicketFilterBuilder.Build(status, assignedToId, reportedById);
@@ -177,7 +198,6 @@ namespace GardenGroup.Repositories
             return find.ToList();
         }
 
-        // Highest ticketId via the unique index (reverse index scan, 1 document).
         public int GetLastTicketId() =>
             _tickets.Find(_ => true)
                 .SortByDescending(t => t.TicketId)
