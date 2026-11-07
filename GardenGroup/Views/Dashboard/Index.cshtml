@@ -4,14 +4,14 @@
 @{
     ViewData["Title"] = "Dashboard";
 
-    // Cijfers in CSS moeten met een punt (12.5), ook als de pagina in het Nederlands draait (12,5).
+    // Numbers in CSS need a dot (12.5), even if the page runs in Dutch (12,5).
     string Css(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
 
     string Label(TicketCategory c) => c switch
     {
         TicketCategory.Open => "Open",
-        TicketCategory.Resolved => "Opgelost",
-        _ => "Gesloten zonder oplossing"
+        TicketCategory.Resolved => "Resolved",
+        _ => "Closed without resolve"
     };
 
     string Mod(TicketCategory c) => c switch
@@ -30,27 +30,27 @@
 
 <div class="dash">
     <header class="dash-head">
-        <h1>@(Model.IsPersonal ? "Jouw tickets in één oogopslag" : "Stand van alle tickets")</h1>
-        <p>@(total == 1 ? "1 ticket" : $"{total} tickets") in totaal</p>
+        <h1>@(Model.IsPersonal ? "Your tickets at a glance" : "Status of all tickets")</h1>
+        <p>@(total == 1 ? "1 ticket" : $"{total} tickets") in total</p>
     </header>
 
     @if (total == 0)
     {
         <div class="dash-empty">
             <p class="dash-empty-title">
-                @(Model.IsPersonal ? "Je hebt nog geen tickets." : "Er zijn nog geen tickets.")
+                @(Model.IsPersonal ? "You have no tickets yet." : "There are no tickets yet.")
             </p>
             <p>
                 @(Model.IsPersonal
-                    ? "Zodra je een incident meldt, zie je hier hoe het ervoor staat."
-                    : "Zodra er tickets zijn aangemaakt, verschijnt hier de stand van zaken.")
+                    ? "Once you report an incident, you will see how it is going here."
+                    : "Once tickets are created, the current status will appear here.")
             </p>
-            <a class="btn btn-outline-secondary" asp-controller="Ticket" asp-action="Index">Naar tickets</a>
+            <a class="btn btn-outline-secondary" asp-controller="Ticket" asp-action="Index">Go to tickets</a>
         </div>
     }
     else
     {
-        <div class="dist" role="img" aria-label="Verdeling van tickets. @summary">
+        <div class="dist" role="img" aria-label="Distribution of tickets. @summary">
             @foreach (var c in Model.Categories.Where(c => c.Count > 0))
             {
                 <div class="dist-seg @Mod(c.Category)"
@@ -74,10 +74,10 @@
     @if (!Model.IsPersonal)
     {
         <section class="work">
-            <h2>Werkverdeling</h2>
+            <h2>Workload</h2>
             @if (!Model.Workloads.Any())
             {
-                <p class="text-muted">Er zijn nog geen tickets toegewezen.</p>
+                <p class="text-muted">No tickets have been assigned yet.</p>
             }
             else
             {
